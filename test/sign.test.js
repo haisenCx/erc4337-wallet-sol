@@ -60,17 +60,17 @@ describe("sign-test", function () {
 
             let params = [ethers.utils.keccak256(ethers.utils.toUtf8Bytes("bytes")), addr2.address, 1]
             let pack = ethers.utils.defaultAbiCoder.encode(["bytes", "address", "uint256"], params);
-            console.log("pack:", pack);
+            Log("pack:" + pack);
             let packHash = ethers.utils.keccak256(pack);
 
             let signature = await addr1.signMessage(arrayify(packHash));
-            console.log("signature:" + signature);
+            Log("signature:" + signature);
 
             Log("Result: " + params.toString())
             Log("addr1 address:" + addr1.address);
 
             const verifyRes = await testSign.verify(addr1.address, signature, params[0], params[1], params[2]);
-            console.log("verifyRes:", verifyRes);
+            Log("verifyRes:" + verifyRes);
             expect(verifyRes).to.equal(0);
         });
     });

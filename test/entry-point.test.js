@@ -1,6 +1,6 @@
 // const { describe, beforeEach, it } = require('mocha');
 const {expect} = require("chai");
-const {ethers, network} = require("hardhat");
+const {ethers, waffle} = require("hardhat");
 const {arrayify} = require("@ethersproject/bytes");
 
 const ETH = (value) => ethers.utils.parseEther(value);
@@ -9,19 +9,18 @@ function Log(msg) {
     console.log("\t" + msg);
 }
 
-function parseHexString(str) {
-    var result = [];
-    while (str.length >= 2) {
-        result.push(parseInt(str.substring(0, 2), 16));
-        str = str.substring(2, str.length);
-    }
-    return result;
+function sendMainTokenCall(toAddress, amount) {
+    // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
+    let ABI = ["function execute(address dest, uint256 value, bytes calldata func)"];
+    let iface = new ethers.utils.Interface(ABI);
+    return iface.encodeFunctionData("execute", [toAddress, amount, "0x"]);
 }
 
 // eslint-disable-next-line no-undef
-describe("genofusion-asset", function () {
-    let admin, maintainer, minter, signer, addr1, addr2, addrs;
+describe("Send Token", function () {
+    let sender, receiver, paymaster, addrs;
 
+    let testERC20TokenFactory, testERC20Token;
     let entryPointFactory, entryPoint;
     let simpleAccountFactory, simpleAccount;
 
@@ -29,12 +28,17 @@ describe("genofusion-asset", function () {
     // time. It receives a callback, which can be async.
     // eslint-disable-next-line no-undef
     beforeEach(async function () {
-        [admin, maintainer, signer, minter, addr1, addr2, ...addrs] = await ethers.getSigners();
+        [sender, receiver, paymaster, ...addrs] = await ethers.getSigners();
 
         entryPointFactory = await ethers.getContractFactory("EntryPoint");
         entryPoint = await entryPointFactory.deploy();
         await entryPoint.deployed();
         Log("entryPoint contract address: " + entryPoint.address);
+
+        testERC20TokenFactory = await ethers.getContractFactory("TestToken");
+        testERC20Token = await testERC20TokenFactory.deploy();
+        await testERC20Token.deployed();
+        Log("test ERC20 token contract address: " + testERC20Token.address);
 
         simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
         simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
@@ -42,66 +46,151 @@ describe("genofusion-asset", function () {
         Log("simpleAccount contract address: " + simpleAccount.address);
 
 
-        // set wallet owner
-        let tx = await simpleAccount.initialize(addr1.address);
-        tx.wait();
-        // deposit
-        tx = await entryPoint.depositTo(simpleAccount.address, {value: ETH("100")});
+        // set wallet account owner
+        let tx = await simpleAccount.initialize(sender.address);
         tx.wait();
     });
 
     // eslint-disable-next-line no-undef
-    describe("Deployment", function () {
+    describe("Send Main Token", function () {
 
         /**
-         * address sender;
-         * uint256 nonce;
-         * bytes initCode;
-         * bytes callData;
-         * uint256 callGasLimit;
-         * uint256 verificationGasLimit;
-         * uint256 preVerificationGas;
-         * uint256 maxFeePerGas;
-         * uint256 maxPriorityFeePerGas;
-         * bytes paymasterAndData;
-         * bytes signature;
+         * UserOperation {
+         *      address sender;
+         *      uint256 nonce;
+         *      bytes initCode;
+         *      bytes callData;
+         *      uint256 callGasLimit;
+         *      uint256 verificationGasLimit;
+         *      uint256 preVerificationGas;
+         *      uint256 maxFeePerGas;
+         *      uint256 maxPriorityFeePerGas;
+         *      bytes paymasterAndData;
+         *      bytes signature;
+         * }
          **/
+
         // eslint-disable-next-line no-undef
-        it("Should set the right admin / maintainer / minter", async function () {
+        it("Should transfer ETH success with not paymaster", async function () {
+            // TODO paymaster address is a smart contract address
+            // deposit to wallet account
+            const depositAmount = ETH("1");
+            const deposit = await sender.sendTransaction({
+                to: simpleAccount.address, value: depositAmount,
+            });
+            await deposit.wait();
+            const balance = await waffle.provider.getBalance(simpleAccount.address);
+            expect(balance).to.eq(depositAmount);
 
-            // paymaster sign
-            let paymasterAccount = addr1;
+            const transferAmount = ETH("0.01");
 
-            let paymasterAddressBytes = parseHexString(paymasterAccount.address.substring(2));
-            let callData = ethers.utils.keccak256("0xb61d27f6000000000000000000000000ff171ddfb3236940297808345f7e32c4b5bf097f000000000000000000000000000000000000000000000000000000000098968000000000000000000000000000000000000000000000000000000000000000600000000000000000000000000000000000000000000000000000000000000000");
-            Log("callData: " + callData);
+            const senderAddress = simpleAccount.address;
+            const nonce = 0;
+            const initCode = "0x";
+            const callData = sendMainTokenCall(receiver.address, transferAmount);
+            const callGasLimit = 210000;
+            const verificationGasLimit = 210000;
+            const preVerificationGas = 210000;
+            const maxFeePerGas = 6000000000;
+            const maxPriorityFeePerGas = 6000000000;
+            const paymasterAndData = "0x";
+            let signature = "0x";
 
-            let paymasterOpHexStr = ethers.utils.defaultAbiCoder.encode(
-                ["address", "uint256", "bytes", "bytes", "uint256", "uint256", "uint256", "uint256", "uint256", "bytes", "bytes"],
-                [simpleAccount.address, 0, "0x", callData,
-                    2100000, 2100000, 2100000, 60000000000, 60000000000, "0x", "0x"]);
-            paymasterOpHexStr = paymasterOpHexStr.substring(0, paymasterOpHexStr.length - 64);
-            let hash = ethers.utils.keccak256(paymasterOpHexStr);
+            // get balance now
+            const receiverBalance = await receiver.getBalance();
 
-
+            // calculation UserOperation hash for sign
+            let userOpPack = ethers.utils.defaultAbiCoder.encode(
+                ["address", "uint256", "bytes", "bytes", "uint256", "uint256",
+                    "uint256", "uint256", "uint256", "bytes", "bytes"],
+                [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
+                    preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature]);
+            // remove signature
+            userOpPack = userOpPack.substring(0, userOpPack.length - 64);
+            const hash = ethers.utils.keccak256(userOpPack);
             const {chainId} = await ethers.provider.getNetwork();
             const packData = ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint256"],
                 [hash, entryPoint.address, chainId]);
-            console.log("packData:", packData);
-            let getUserOpHash = ethers.utils.keccak256(packData);
-            let signature3 = await addr1.signMessage(arrayify(getUserOpHash));
-            console.log("signature3:", signature3);
+            const userOpHash = ethers.utils.keccak256(packData);
 
-            // paymasterDataBytes = parseHexString(paymasterDataHex.substring(2));
-            let params = [simpleAccount.address.toLowerCase(), 0, "0x", callData,
-                2100000, 2100000, 2100000, 60000000000, 60000000000, "0x", signature3];
+            // sender sign UserOperator
+            signature = await sender.signMessage(arrayify(userOpHash));
 
-            Log("Result: " + params.toString())
+            // send tx to handleOps
+            const params = [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
+                preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature];
+            const handleOpsRes = await entryPoint.handleOps([params], sender.address);
+            handleOpsRes.wait();
 
-            Log("addr1 address:" + addr1.address);
+            // check receiver new balance whether increase or not
+            const receiverNewBalance = await receiver.getBalance();
+            expect(receiverNewBalance).to.equal(receiverBalance.add(transferAmount));
+        });
 
-            const handleOpsRes = await entryPoint.handleOps([params], addr1.address);
-            console.log("handleOpsRes tx:", handleOpsRes.hash);
+        it("Should transfer ETH success with paymaster", async function () {
+            // deposit to paymaster
+            const depositAmount = ETH("1");
+            const depositTx = await entryPoint.depositTo(paymaster.address, {value: depositAmount});
+            await depositTx.wait();
+            const balance = await entryPoint.balanceOf(paymaster.address);
+            expect(balance).to.eq(depositAmount);
+
+            const transferAmount = ETH("0.01");
+
+            const senderAddress = simpleAccount.address;
+            const nonce = 0;
+            const initCode = "0x";
+            const callData = sendMainTokenCall(receiver.address, transferAmount);
+            const callGasLimit = 210000;
+            const verificationGasLimit = 210000;
+            const preVerificationGas = 210000;
+            const maxFeePerGas = 6000000000;
+            const maxPriorityFeePerGas = 6000000000;
+            let paymasterAndData;
+            let signature = "0x";
+
+            // paymaster sign
+            let paymasterSignPack = ethers.utils.defaultAbiCoder.encode(
+                ["address", "uint256", "bytes", "bytes", "uint256", "uint256",
+                    "uint256", "uint256", "uint256"],
+                [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
+                    preVerificationGas, maxFeePerGas, maxPriorityFeePerGas]);
+            const paymasterSignPackHash = ethers.utils.keccak256(paymasterSignPack);
+            const paymasterDataSign = await paymaster.signMessage(arrayify(paymasterSignPackHash));
+            paymasterAndData = ethers.utils.defaultAbiCoder.encode(["bytes20", "bytes"],
+                [paymaster.address, paymasterDataSign]);
+            console.log("paymaster.address: " + paymaster.address);
+            console.log("paymasterAndData: " + paymasterAndData);
+
+            // get balance now
+            const receiverBalance = await receiver.getBalance();
+
+            // calculation UserOperation hash for sign
+            let userOpPack = ethers.utils.defaultAbiCoder.encode(
+                ["address", "uint256", "bytes", "bytes", "uint256", "uint256",
+                    "uint256", "uint256", "uint256", "bytes", "bytes"],
+                [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
+                    preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature]);
+            // remove signature
+            // userOpPack = userOpPack.substring(0, userOpPack.length - 64);
+            const hash = ethers.utils.keccak256(userOpPack);
+            const {chainId} = await ethers.provider.getNetwork();
+            const packData = ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint256"],
+                [hash, entryPoint.address, chainId]);
+            const userOpHash = ethers.utils.keccak256(packData);
+
+            // sender sign UserOperator
+            signature = await sender.signMessage(arrayify(userOpHash));
+
+            // send tx to handleOps
+            const params = [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
+                preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature];
+            const handleOpsRes = await entryPoint.handleOps([params], sender.address);
+            handleOpsRes.wait();
+
+            // check receiver new balance whether increase or not
+            const receiverNewBalance = await receiver.getBalance();
+            expect(receiverNewBalance).to.equal(receiverBalance.add(transferAmount));
         });
     });
 
