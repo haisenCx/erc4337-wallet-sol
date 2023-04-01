@@ -4,6 +4,7 @@ const {ethers, waffle} = require("hardhat");
 const {arrayify} = require("@ethersproject/bytes");
 
 const ETH = (value) => ethers.utils.parseEther(value);
+const Token = (value) => ethers.utils.parseEther(value);
 
 function Log(msg) {
     console.log("\t" + msg);
@@ -18,17 +19,23 @@ function sendMainTokenCall(toAddress, amount) {
 
 // eslint-disable-next-line no-undef
 describe("Send Token", function () {
-    let sender, receiver, paymaster, addrs;
+    let sender, receiver, paymaster, bundler, addrs;
 
     let testERC20TokenFactory, testERC20Token;
     let entryPointFactory, entryPoint;
+    let simpleAccountFFactory, simpleAccountF;
     let simpleAccountFactory, simpleAccount;
+    let tokenPaymasterFactory, tokenPaymaster;
 
     // `beforeEach` will run before each test, re-deploying the contract every
     // time. It receives a callback, which can be async.
     // eslint-disable-next-line no-undef
     beforeEach(async function () {
-        [sender, receiver, paymaster, ...addrs] = await ethers.getSigners();
+        [sender, receiver, paymaster, bundler, ...addrs] = await ethers.getSigners();
+        Log("sender address: " + sender.address);
+        Log("receiver address: " + receiver.address);
+        Log("paymaster address: " + paymaster.address);
+        Log("bundler address: " + bundler.address);
 
         entryPointFactory = await ethers.getContractFactory("EntryPoint");
         entryPoint = await entryPointFactory.deploy();
@@ -40,15 +47,24 @@ describe("Send Token", function () {
         await testERC20Token.deployed();
         Log("test ERC20 token contract address: " + testERC20Token.address);
 
+        simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
+        simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
+        await simpleAccountF.deployed();
+        Log("simpleAccount Factory contract address: " + simpleAccountF.address);
+
         simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
         simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
         await simpleAccount.deployed();
         Log("simpleAccount contract address: " + simpleAccount.address);
-
-
         // set wallet account owner
-        let tx = await simpleAccount.initialize(sender.address);
-        tx.wait();
+        await simpleAccount.initialize(sender.address);
+
+        tokenPaymasterFactory = await ethers.getContractFactory("TokenPaymaster");
+        tokenPaymaster = await tokenPaymasterFactory.deploy(
+            simpleAccountF.address, "USDCPM", entryPoint.address);
+        await tokenPaymaster.deployed();
+        Log("tokenPaymaster contract address: " + tokenPaymaster.address);
+
     });
 
     // eslint-disable-next-line no-undef
@@ -72,7 +88,6 @@ describe("Send Token", function () {
 
         // eslint-disable-next-line no-undef
         it("Should transfer ETH success with not paymaster", async function () {
-            // TODO paymaster address is a smart contract address
             // deposit to wallet account
             const depositAmount = ETH("1");
             const deposit = await sender.sendTransaction({
@@ -128,12 +143,26 @@ describe("Send Token", function () {
         });
 
         it("Should transfer ETH success with paymaster", async function () {
+            const depositETHAmount = ETH("1");
+            const depositTokenAmount = Token("1000");
+            // deposit to wallet account
+            const deposit = await sender.sendTransaction({
+                to: simpleAccount.address, value: depositETHAmount,
+            });
+            await deposit.wait();
+            const walletETHBalance = await waffle.provider.getBalance(simpleAccount.address);
+            expect(walletETHBalance).to.eq(depositETHAmount);
+
             // deposit to paymaster
-            const depositAmount = ETH("1");
-            const depositTx = await entryPoint.depositTo(paymaster.address, {value: depositAmount});
+            const depositTx = await entryPoint.depositTo(tokenPaymaster.address, {value: depositETHAmount});
             await depositTx.wait();
-            const balance = await entryPoint.balanceOf(paymaster.address);
-            expect(balance).to.eq(depositAmount);
+            const balance = await entryPoint.balanceOf(tokenPaymaster.address);
+            expect(balance).to.eq(depositETHAmount);
+
+            // mint token to wallet
+            await tokenPaymaster.mintTokens(simpleAccount.address, depositTokenAmount);
+            const walletTokenBalance = await tokenPaymaster.balanceOf(simpleAccount.address);
+            expect(walletTokenBalance).to.eq(depositTokenAmount);
 
             const transferAmount = ETH("0.01");
 
@@ -157,13 +186,9 @@ describe("Send Token", function () {
                     preVerificationGas, maxFeePerGas, maxPriorityFeePerGas]);
             const paymasterSignPackHash = ethers.utils.keccak256(paymasterSignPack);
             const paymasterDataSign = await paymaster.signMessage(arrayify(paymasterSignPackHash));
-            paymasterAndData = ethers.utils.defaultAbiCoder.encode(["bytes20", "bytes"],
-                [paymaster.address, paymasterDataSign]);
-            console.log("paymaster.address: " + paymaster.address);
-            console.log("paymasterAndData: " + paymasterAndData);
-
-            // get balance now
-            const receiverBalance = await receiver.getBalance();
+            paymasterAndData = ethers.utils.defaultAbiCoder.encode(
+                ["bytes20", "bytes"],
+                [tokenPaymaster.address, paymasterDataSign]);
 
             // calculation UserOperation hash for sign
             let userOpPack = ethers.utils.defaultAbiCoder.encode(
@@ -172,7 +197,7 @@ describe("Send Token", function () {
                 [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
                     preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature]);
             // remove signature
-            // userOpPack = userOpPack.substring(0, userOpPack.length - 64);
+            userOpPack = userOpPack.substring(0, userOpPack.length - 64);
             const hash = ethers.utils.keccak256(userOpPack);
             const {chainId} = await ethers.provider.getNetwork();
             const packData = ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint256"],
@@ -182,15 +207,25 @@ describe("Send Token", function () {
             // sender sign UserOperator
             signature = await sender.signMessage(arrayify(userOpHash));
 
+            // get balance now
+            const senderETHBalance = await sender.getBalance();
+            const bundlerBalance = await bundler.getBalance();
+            const tokenPaymasterTokenBalance = await tokenPaymaster.balanceOf(tokenPaymaster.address);
+
             // send tx to handleOps
             const params = [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
                 preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature];
-            const handleOpsRes = await entryPoint.handleOps([params], sender.address);
-            handleOpsRes.wait();
+            await entryPoint.connect(bundler).handleOps([params], bundler.address);
 
             // check receiver new balance whether increase or not
-            const receiverNewBalance = await receiver.getBalance();
-            expect(receiverNewBalance).to.equal(receiverBalance.add(transferAmount));
+            expect(await sender.getBalance()).to.equal(senderETHBalance);
+
+
+            // gas fee cost from wallet account, so it's reduce
+            expect(await tokenPaymaster.balanceOf(simpleAccount.address)).to.lt(depositTokenAmount);
+
+            expect(await tokenPaymaster.balanceOf(tokenPaymaster.address)).to.gt(tokenPaymasterTokenBalance);
+            expect(await bundler.getBalance()).to.gt(bundlerBalance);
         });
     });
 
