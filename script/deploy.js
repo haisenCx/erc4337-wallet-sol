@@ -32,10 +32,32 @@ async function main() {
 
     console.log("Network:", hre.network.name)
 
+    let [addr, ...addrs] = await ethers.getSigners();
+
+    console.log("address: " + addr.address);
     const entryPointFactory = await ethers.getContractFactory("EntryPoint");
     const entryPoint = await entryPointFactory.deploy()
     await entryPoint.deployed();
-    console.log("EntryPoint address: " + entryPoint.address);
+    console.log("EntryPoint contract address: " + entryPoint.address);
+
+    const simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
+    const simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
+    await simpleAccountF.deployed();
+    console.log("simpleAccount Factory contract address: " + simpleAccountF.address);
+
+    const simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
+    const simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
+    await simpleAccount.deployed();
+    console.log("simpleAccount contract address: " + simpleAccount.address);
+    // set wallet account owner
+    await simpleAccount.initialize(addr.address);
+
+    const tokenPaymasterFactory = await ethers.getContractFactory("TokenPaymaster");
+    const tokenPaymaster = await tokenPaymasterFactory.deploy(
+        simpleAccountF.address, "USDTPM", entryPoint.address);
+    await tokenPaymaster.deployed();
+    console.log("tokenPaymaster contract address: " + tokenPaymaster.address);
+
 }
 
 // We recommend this pattern to be able to use async/await everywhere

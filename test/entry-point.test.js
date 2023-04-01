@@ -61,7 +61,7 @@ describe("Send Token", function () {
 
         tokenPaymasterFactory = await ethers.getContractFactory("TokenPaymaster");
         tokenPaymaster = await tokenPaymasterFactory.deploy(
-            simpleAccountF.address, "USDCPM", entryPoint.address);
+            simpleAccountF.address, "USDTPM", entryPoint.address);
         await tokenPaymaster.deployed();
         Log("tokenPaymaster contract address: " + tokenPaymaster.address);
 
@@ -97,12 +97,13 @@ describe("Send Token", function () {
             const balance = await waffle.provider.getBalance(simpleAccount.address);
             expect(balance).to.eq(depositAmount);
 
-            const transferAmount = ETH("0.01");
+            const transferAmount = ETH("0.0001");
 
             const senderAddress = simpleAccount.address;
             const nonce = 0;
             const initCode = "0x";
             const callData = sendMainTokenCall(receiver.address, transferAmount);
+            console.log("callData::" + callData);
             const callGasLimit = 210000;
             const verificationGasLimit = 210000;
             const preVerificationGas = 210000;
@@ -134,6 +135,12 @@ describe("Send Token", function () {
             // send tx to handleOps
             const params = [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
                 preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature];
+            // const simulateValidationRes = await entryPoint.simulateValidation(params, {gasLimit: 100000});
+
+            // eventLog = simulateHandleOpRes.events.find((event) => event.event === "ExecutionResult");
+            // [_sender, _babyIndex, _status, _] = eventLog.args;
+            // console.log("_sender:" + _sender);
+
             const handleOpsRes = await entryPoint.handleOps([params], sender.address);
             handleOpsRes.wait();
 
@@ -215,6 +222,13 @@ describe("Send Token", function () {
             // send tx to handleOps
             const params = [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
                 preVerificationGas, maxFeePerGas, maxPriorityFeePerGas, paymasterAndData, signature];
+            // const simulateValidationRes = await entryPoint.connect(bundler).simulateValidation(params, {gasLimit: 100000});
+            // const simulateValidationRes = await entryPoint.simulateValidation(params, {gasLimit: 100000});
+
+            // console.log("simulateValidationRes:", simulateValidationRes);
+            // await expect(await entryPoint.connect(bundler).simulateValidation(params).to.be.revertedWith('ValidationResult'));
+            // console.log("simulateValidationRes:" + simulateValidationRes);
+
             await entryPoint.connect(bundler).handleOps([params], bundler.address);
 
             // check receiver new balance whether increase or not

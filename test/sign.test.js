@@ -1,26 +1,10 @@
 // const { describe, beforeEach, it } = require('mocha');
 const {expect} = require("chai");
-const {ethers, network} = require("hardhat");
-const web3 = require("web3");
-const {address} = require("hardhat/internal/core/config/config-validation");
+const {ethers} = require("hardhat");
 const {arrayify} = require("@ethersproject/bytes");
-
-const ETH = (value) => ethers.utils.parseEther(value);
 
 function Log(msg) {
     console.log("\t" + msg);
-}
-
-// Sign with private key
-function SignTest(account, hash, address, chainId) {
-    const packData = ethers.utils.defaultAbiCoder.encode(["bytes32", "address", "uint256"], [hash, address, chainId]);
-    console.log("packData:", packData);
-    let getUserOpHash = web3.utils.keccak256(packData);
-    console.log("js: getUserOpHash()", getUserOpHash);
-    let signKeccak256 = web3.utils.keccak256(ethers.utils.solidityPack(["string", "bytes32"], ["\x19Ethereum Signed Message:\n32", getUserOpHash]));
-    // signKeccak256 pass
-    console.log("js: contains ETH sign:", signKeccak256);
-    return signKeccak256;
 }
 
 // eslint-disable-next-line no-undef
