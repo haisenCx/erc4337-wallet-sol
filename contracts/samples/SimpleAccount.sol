@@ -11,6 +11,8 @@ import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 import "../core/BaseAccount.sol";
 
+import "hardhat/console.sol";
+
 /**
   * minimal account.
   *  this is sample minimal account.
