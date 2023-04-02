@@ -12,7 +12,8 @@
     "event-hash": "npx hardhat test --network hardhat test/calc-event-hash.test.js",
     "deploy": "npx hardhat --network mumbai run script/deploy.js",
     "verify-test": "npx hardhat --network mumbai run script/verify-blockscan.js",
-    "params-transfer": "npx hardhat --network mumbai run script/transfer-main-token-without-paymaster.js",
+    "transfer-without-pay": "npx hardhat --network mumbai run script/transfer-main-token-without-paymaster.js",
+    "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-main-token-with-paymaster.js",
     "verify": "npx hardhat --network mumbai run script/verify-blockscan.js"
   },
   "keywords": [],

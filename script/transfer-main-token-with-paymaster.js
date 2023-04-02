@@ -69,8 +69,20 @@ async function main() {
     const preVerificationGas = 210000;
     const maxFeePerGas = 6000000000;
     const maxPriorityFeePerGas = 6000000000;
-    const paymasterAndData = "0x";
+    let paymasterAndData;
     let signature = "0x";
+
+    // paymaster sign
+    let paymasterSignPack = ethers.utils.defaultAbiCoder.encode(
+        ["address", "uint256", "bytes", "bytes", "uint256", "uint256",
+            "uint256", "uint256", "uint256"],
+        [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
+            preVerificationGas, maxFeePerGas, maxPriorityFeePerGas]);
+    const paymasterSignPackHash = ethers.utils.keccak256(paymasterSignPack);
+    const paymasterDataSign = await addr.signMessage(arrayify(paymasterSignPackHash));
+    paymasterAndData = ethers.utils.defaultAbiCoder.encode(
+        ["bytes20", "bytes"],
+        [config.contract_address.token_paymaster, paymasterDataSign]);
 
     // calculation UserOperation hash for sign
     let userOpPack = ethers.utils.defaultAbiCoder.encode(
