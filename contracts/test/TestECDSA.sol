@@ -13,8 +13,6 @@ contract TestSign {
         bytes32 hash = keccak256(abi.encode(data1, address(data2), data3));
         bytes32 hashForEth = hash.toEthSignedMessageHash();
 
-        console.log("signer:", signer);
-        console.log("recover:", hashForEth.recover(signature));
         if (signer != hashForEth.recover(signature))
             return 1;
         return 0;
