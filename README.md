@@ -25,6 +25,10 @@ npm install
 
 ## Doc
 1. eip4337: https://eips.ethereum.org/EIPS/eip-4337
-2. eip4337 vtalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a
+2. eip4337 vitalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes
+   -d75c9d94dc4a
 3. AA code source: https://github.com/eth-infinitism/account-abstraction
 4. AA blog by alchemy: https://www.alchemy.com/blog/account-abstraction
+5. Multisign: https://github.com/safe-global/safe-contracts(https://github.com/OpenZeppelin/gnosis-multisig)
+6. mumbai chainLink：https://faucets.chain.link/mumbai
+7. mumbai faucet: https://faucet.polygon.technology/

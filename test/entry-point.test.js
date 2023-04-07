@@ -40,22 +40,22 @@ describe("Send Token", function () {
         entryPointFactory = await ethers.getContractFactory("EntryPoint");
         entryPoint = await entryPointFactory.deploy();
         await entryPoint.deployed();
-        Log("entryPoint contract address: " + entryPoint.address);
+        Log("EntryPoint contract address: " + entryPoint.address);
 
         testERC20TokenFactory = await ethers.getContractFactory("TestToken");
         testERC20Token = await testERC20TokenFactory.deploy();
         await testERC20Token.deployed();
-        Log("test ERC20 token contract address: " + testERC20Token.address);
+        Log("TestToken ERC20 contract address: " + testERC20Token.address);
 
         simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
         simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
         await simpleAccountF.deployed();
-        Log("simpleAccount Factory contract address: " + simpleAccountF.address);
+        Log("SimpleAccountFactory contract address: " + simpleAccountF.address);
 
         simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
         simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
         await simpleAccount.deployed();
-        Log("simpleAccount contract address: " + simpleAccount.address);
+        Log("SimpleAccount contract address: " + simpleAccount.address);
         // set wallet account owner
         await simpleAccount.initialize(sender.address);
 
