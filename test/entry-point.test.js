@@ -97,7 +97,7 @@ describe("Send Token", function () {
             const balance = await waffle.provider.getBalance(simpleAccount.address);
             expect(balance).to.eq(depositAmount);
 
-            const transferAmount = ETH("0.0001");
+            const transferAmount = ETH("0.1");
 
             const senderAddress = simpleAccount.address;
             const nonce = 0;
@@ -192,6 +192,7 @@ describe("Send Token", function () {
                 [senderAddress, nonce, initCode, callData, callGasLimit, verificationGasLimit,
                     preVerificationGas, maxFeePerGas, maxPriorityFeePerGas]);
             const paymasterSignPackHash = ethers.utils.keccak256(paymasterSignPack);
+            // 测试的TokenPaymaster不包含验证逻辑，所以签名没有进行验证
             const paymasterDataSign = await paymaster.signMessage(arrayify(paymasterSignPackHash));
             paymasterAndData = ethers.utils.defaultAbiCoder.encode(
                 ["bytes20", "bytes"],
