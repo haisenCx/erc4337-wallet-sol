@@ -1,7 +1,8 @@
 // const { describe, beforeEach, it } = require('mocha');
 const {expect} = require("chai");
-const {ethers, waffle} = require("hardhat");
+const {ethers, waffle, artifacts} = require("hardhat");
 const {arrayify} = require("@ethersproject/bytes");
+const {address} = require("hardhat/internal/core/config/config-validation");
 
 const ETH = (value) => ethers.utils.parseEther(value);
 const Token = (value) => ethers.utils.parseEther(value);
@@ -10,11 +11,30 @@ function Log(msg) {
     console.log("\t" + msg);
 }
 
+async function getBytecode(contractName) {
+    const contract = await artifacts.readArtifactSync(contractName);
+    return contract.bytecode;
+}
+
 function sendMainTokenCall(toAddress, amount) {
     // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
     let ABI = ["function execute(address dest, uint256 value, bytes calldata func)"];
     let iface = new ethers.utils.Interface(ABI);
     return iface.encodeFunctionData("execute", [toAddress, amount, "0x"]);
+}
+
+function simpleAccountFactoryCreateAccountCall(ownerAddress, salt) {
+    // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
+    let ABI = ["function createAccount(address owner, uint salt)"];
+    let iface = new ethers.utils.Interface(ABI);
+    return iface.encodeFunctionData("createAccount", [ownerAddress, salt]);
+}
+
+function simpleAccountFactoryGetAddressCall(ownerAddress, salt) {
+    // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
+    let ABI = ["function getAddress(address owner, uint salt)"];
+    let iface = new ethers.utils.Interface(ABI);
+    return iface.encodeFunctionData("getAddress", [ownerAddress, salt]);
 }
 
 // eslint-disable-next-line no-undef
@@ -103,7 +123,6 @@ describe("Send Token", function () {
             const nonce = 0;
             const initCode = "0x";
             const callData = sendMainTokenCall(receiver.address, transferAmount);
-            console.log("callData::" + callData);
             const callGasLimit = 210000;
             const verificationGasLimit = 210000;
             const preVerificationGas = 210000;
@@ -242,6 +261,113 @@ describe("Send Token", function () {
             expect(await tokenPaymaster.balanceOf(tokenPaymaster.address)).to.gt(tokenPaymasterTokenBalance);
             expect(await bundler.getBalance()).to.gt(bundlerBalance);
         });
+    });
+
+});
+
+
+describe("Account Management", function () {
+    let sender, receiver, paymaster, bundler, addrs;
+
+    let testERC20TokenFactory, testERC20Token;
+    let entryPointFactory, entryPoint;
+    let simpleAccountFFactory, simpleAccountF;
+    let simpleAccountFactory, simpleAccount;
+    let tokenPaymasterFactory, tokenPaymaster;
+
+    // `beforeEach` will run before each test, re-deploying the contract every
+    // time. It receives a callback, which can be async.
+    // eslint-disable-next-line no-undef
+    beforeEach(async function () {
+        [sender, receiver, paymaster, bundler, ...addrs] = await ethers.getSigners();
+        Log("sender address: " + sender.address);
+        Log("receiver address: " + receiver.address);
+        Log("paymaster address: " + paymaster.address);
+        Log("bundler address: " + bundler.address);
+
+        entryPointFactory = await ethers.getContractFactory("EntryPoint");
+        entryPoint = await entryPointFactory.deploy();
+        await entryPoint.deployed();
+        Log("EntryPoint contract address: " + entryPoint.address);
+
+        testERC20TokenFactory = await ethers.getContractFactory("TestToken");
+        testERC20Token = await testERC20TokenFactory.deploy();
+        await testERC20Token.deployed();
+        Log("TestToken ERC20 contract address: " + testERC20Token.address);
+
+        simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
+        simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
+        await simpleAccountF.deployed();
+        Log("SimpleAccountFactory contract address: " + simpleAccountF.address);
+
+        simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
+        simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
+        await simpleAccount.deployed();
+        Log("SimpleAccount contract address: " + simpleAccount.address);
+        // set wallet account owner
+        await simpleAccount.initialize(sender.address);
+
+        tokenPaymasterFactory = await ethers.getContractFactory("TokenPaymaster");
+        tokenPaymaster = await tokenPaymasterFactory.deploy(
+            simpleAccountF.address, "USDTPM", entryPoint.address);
+        await tokenPaymaster.deployed();
+        Log("tokenPaymaster contract address: " + tokenPaymaster.address);
+
+    });
+
+    // eslint-disable-next-line no-undef
+    describe("Create a new contract wallet", function () {
+
+        /**
+         * UserOperation {
+         *      address sender;
+         *      uint256 nonce;
+         *      bytes initCode;
+         *      bytes callData;
+         *      uint256 callGasLimit;
+         *      uint256 verificationGasLimit;
+         *      uint256 preVerificationGas;
+         *      uint256 maxFeePerGas;
+         *      uint256 maxPriorityFeePerGas;
+         *      bytes paymasterAndData;
+         *      bytes signature;
+         * }
+         **/
+
+        // eslint-disable-next-line no-undef
+        it("Should create a new contract wallet by simpleAccountFactory", async function () {
+            await simpleAccountF.createAccount(sender.address, 1);
+            const addr = await simpleAccountF.getAddress(sender.address, 1);
+            const walletOwner = await simpleAccount.connect(addr).owner();
+            expect(walletOwner).to.eq(sender.address);
+        })
+
+        it("Should create a new contract wallet by bundler", async function () {
+            // deposit to wallet account
+            const depositAmount = ETH("1");
+            const deposit = await sender.sendTransaction({
+                to: simpleAccount.address, value: depositAmount,
+            });
+            await deposit.wait();
+            const balance = await waffle.provider.getBalance(simpleAccount.address);
+            expect(balance).to.eq(depositAmount);
+
+            const initCode = ethers.utils.solidityPack(
+                ['bytes20', 'bytes'],
+                [ethers.utils.arrayify(simpleAccountF.address), ethers.utils.arrayify(simpleAccountFactoryCreateAccountCall(sender.address, 1))]
+            );
+
+            const senderCreatorFactory = await ethers.getContractFactory("SenderCreator");
+            const senderCreator = await senderCreatorFactory.deploy();
+            await senderCreator.deployed();
+
+            await senderCreator.connect(bundler).createSender(initCode);
+            const walletAddress = await simpleAccountF.getAddress(sender.address, 1);
+            expect(await simpleAccount.connect(walletAddress).owner()).to.eq(sender.address);
+            expect(walletAddress).to.not.eq(ethers.constants.AddressZero);
+
+        });
+
     });
 
 });
