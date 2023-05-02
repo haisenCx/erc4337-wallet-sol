@@ -10,8 +10,8 @@ contract UserInfo {
     function addAppConfigRecords(string memory username, string memory passwdHash, address walletAddress) external {
         string memory _userNamePasswdHash = namePasswdHash[username];
         require(keccak256(abi.encode(_userNamePasswdHash)) == keccak256(abi.encode("")), "namePasswdHash is not empty");
-        string memory _nameWalletAddress = nameWalletAddress[username];
-        require(keccak256(abi.encode(_nameWalletAddress)) == keccak256(abi.encode("")), "nameWalletAddress is not empty");
+        address _walletAddress = nameWalletAddress[username];
+        require(address(0) == _walletAddress, "nameWalletAddress is not empty");
         namePasswdHash[username] = passwdHash;
         nameWalletAddress[username] = walletAddress;
     }
