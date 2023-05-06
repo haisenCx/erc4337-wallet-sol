@@ -2,12 +2,11 @@
 
 ## Setup 
 
+### Install
+
 ```shell
 npm install
 ```
-
-## Deploy
-
 
 ### Set env
 
@@ -22,6 +21,37 @@ npm install
     PRIVATE_KEY=0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1
     ```
    
+## Test
+
+
+
+## Deploy
+
+### Mumbai Test Network
+
+1. Deploy ERC4337 component
+   ```shell
+   npm run deploy-erc4337-mumbai
+   ```
+2. Deploy AA Wallet
+   ```shell
+   npm run deploy-aawallet-mumbai
+   ```
+3. Verify on blockchain
+   ```shell
+   # modify params according to 1&2 result
+   npm run verify-mumbai
+   ```
+
+## Contract Address
+
+### Mumbai Test Network
+
+- EntryPoint: [0x9441180e0C561c252b3bF7c2048864b7F0A662A6](https://mumbai.polygonscan.com/address/0x9441180e0C561c252b3bF7c2048864b7F0A662A6)
+- SimpleAccountFactory: [0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e](https://mumbai.polygonscan.com/address/0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e)
+- SimpleAccount: [0x884fBD8043BedC0c700577cbB7632D09dB8E35Fd](https://mumbai.polygonscan.com/address/0x884fBD8043BedC0c700577cbB7632D09dB8E35Fd)
+- TokenPaymaster: [0xa4baa71e173Ef63250fB1D9a1FE1467f722B19C7](https://mumbai.polygonscan.com/address/0xa4baa71e173Ef63250fB1D9a1FE1467f722B19C7)
+
 ## ERC4337
 
 ![erc4337.png](image/erc4337.png)

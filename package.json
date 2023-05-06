@@ -10,8 +10,9 @@
     "entry-test": "npx hardhat test --network hardhat test/entry-point.test.js",
     "sign-test": "npx hardhat test --network hardhat test/sign.test.js",
     "event-hash": "npx hardhat test --network hardhat test/calc-event-hash.js",
-    "deploy": "npx hardhat --network mumbai run script/deploy.js",
-    "verify-test": "npx hardhat --network mumbai run script/verify-blockscan.js",
+    "deploy-erc4337-mumbai": "npx hardhat --network mumbai run script/deploy-erc4337.js",
+    "deploy-aawallet-mumbai": "npx hardhat --network mumbai run script/deploy-aawallet.js",
+    "verify-mumbai": "npx hardhat --network mumbai run script/verify-blockscan.js",
     "transfer-without-pay": "npx hardhat --network mumbai run script/transfer-main-token-without-paymaster.js",
     "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-main-token-with-paymaster.js",
     "verify": "npx hardhat --network mumbai run script/verify-blockscan.js"

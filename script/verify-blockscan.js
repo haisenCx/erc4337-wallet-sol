@@ -5,37 +5,63 @@
 // Runtime Environment's members available in the global scope.
 const hre = require("hardhat");
 
+// [EntryPoint] address: 0x9441180e0C561c252b3bF7c2048864b7F0A662A6
+// [EntryPoint] ConstructorArguments:
+// [SimpleAccountFactory] contract address: 0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e
+// [SimpleAccountFactory] ConstructorArguments: 0x9441180e0C561c252b3bF7c2048864b7F0A662A6
+// [SimpleAccount] contract address: 0x884fBD8043BedC0c700577cbB7632D09dB8E35Fd
+// [SimpleAccount] ConstructorArguments: 0x9441180e0C561c252b3bF7c2048864b7F0A662A6
+// [TokenPaymaster] contract address: 0xa4baa71e173Ef63250fB1D9a1FE1467f722B19C7
+// [TokenPaymaster] ConstructorArguments: 0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e,USDTPM,0x9441180e0C561c252b3bF7c2048864b7F0A662A6
 
 // Constants
 const network_configs = {
     mumbai: {
-        entry_point_contract_address: "0x5Ef8bfc9cB80cD5E3db36927D481cCD719C3Ac0A",
-        entry_point_arguments: [],
+        deploy: [
+            {
+                name: "EntryPoint",
+                address: "0x9441180e0C561c252b3bF7c2048864b7F0A662A6",
+                arguments: [],
+            },
+            {
+                name: "SimpleAccountFactory",
+                address: "0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e",
+                arguments: ["0x9441180e0C561c252b3bF7c2048864b7F0A662A6"],
+                path: "contracts/erc4337/samples/SimpleAccountFactory.sol:SimpleAccountFactory"
+            },
+            {
+                name: "SimpleAccount",
+                address: "0x884fBD8043BedC0c700577cbB7632D09dB8E35Fd",
+                arguments: ["0x9441180e0C561c252b3bF7c2048864b7F0A662A6"],
+            },
+            {
+                name: "TokenPaymaster",
+                address: "0xa4baa71e173Ef63250fB1D9a1FE1467f722B19C7",
+                arguments: ["0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e", "USDTPM", "0x9441180e0C561c252b3bF7c2048864b7F0A662A6"],
+            }
+        ],
     }, ethereum: {},
 }
 
 async function main() {
-    // Hardhat always runs the compile task when running scripts with its command
-    // line interface.
-    //
-    // If this script is run directly using `node` you may want to call compile
-    // manually to make sure everything is compiled
-    // await hre.run('compile');
-
-    // We get the Assets contract to deploy
-
-    let contract_address;
-    let constructor_arguments;
     if (hre.network.name === "mumbai") {
-        contract_address = network_configs.mumbai.entry_point_contract_address
-        constructor_arguments = network_configs.mumbai.entry_point_arguments
-        console.log("contract_address: ", contract_address)
-        console.log("constructor_arguments: ", constructor_arguments)
-        // verify the contracts
-        await hre.run("verify:verify", {
-            address: contract_address,
-            constructorArguments: constructor_arguments,
-        });
+        const deploys = network_configs.mumbai.deploy;
+        for (const contract of deploys) {
+            console.log("Start verify on block scan...");
+            console.log("Contract name: " + contract.name);
+            console.log("Contract path: " + contract.path);
+            console.log("Contract address: " + contract.address);
+            console.log("Contract arguments: " + contract.arguments);
+            try {
+                await hre.run("verify:verify", {
+                    address: contract.address,
+                    constructorArguments: contract.arguments,
+                    contract: contract.path
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
     } else if (hre.network.name === "ethereum") {
     } else {
     }
