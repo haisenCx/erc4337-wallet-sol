@@ -50,7 +50,24 @@ module.exports = {
                         enabled: withOptimizations, runs: 200
                     }
                 }
-            }]
+            },
+            {
+                version: "0.4.14",
+                settings: {
+                    optimizer: {
+                        enabled: withOptimizations, runs: 200
+                    }
+                }
+            },
+            {
+                version: "0.4.24",
+                settings: {
+                    optimizer: {
+                        enabled: withOptimizations, runs: 200
+                    }
+                }
+            },
+        ]
     },
     defaultNetwork: defaultNetwork,
     networks: {
