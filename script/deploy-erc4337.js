@@ -34,12 +34,12 @@ async function main() {
 
     console.log("Deploy contract EOA address: " + addr.address);
 
-    // const entryPointFactory = await ethers.getContractFactory("EntryPoint");
-    // const entryPoint = await entryPointFactory.deploy()
-    // await entryPoint.deployed();
-    // console.log("[EntryPoint] address: " + entryPoint.address);
-    // console.log("[EntryPoint] ConstructorArguments: " + []);
-    // await verifyOnBlockscan(entryPoint.address, [], null)
+    const entryPointFactory = await ethers.getContractFactory("EntryPoint");
+    const entryPoint = await entryPointFactory.deploy()
+    await entryPoint.deployed();
+    console.log("[EntryPoint] address: " + entryPoint.address);
+    console.log("[EntryPoint] ConstructorArguments: " + []);
+    await verifyOnBlockscan(entryPoint.address, [], null)
 
     const simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
     const simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
