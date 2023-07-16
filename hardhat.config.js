@@ -85,6 +85,9 @@ module.exports = {
         }, mumbai: {
             url: 'https://polygon-mumbai.g.alchemy.com/v2/GmqREz-eRvN6r_lVW8aTY3VipXvn3qKL',
             accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
+        }, polygon: {
+            url: 'https://polygon-mainnet.g.alchemy.com/v2/DM_dA_cDWvI6a2IfGOe0RhDVWyXhvmYN',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
         }
     },
     gasReporter: {

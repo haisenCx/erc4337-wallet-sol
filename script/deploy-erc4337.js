@@ -7,9 +7,7 @@ const {ethers} = require("hardhat");
 const hre = require("hardhat");
 
 const network_configs = {
-    mumbai: {
-    }, ethereum: {
-    },
+    mumbai: {}, ethereum: {}, polygon: {},
 }
 
 let config;
