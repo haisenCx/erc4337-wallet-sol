@@ -1,5 +1,9 @@
 # AA Wallet Solidity
 
+## Dependence
+
+- Node: v16.x+
+
 ## Setup 
 
 ### Install
