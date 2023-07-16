@@ -16,7 +16,6 @@ import "../interfaces/IEntryPoint.sol";
 import "./StakeManager.sol";
 import "./SenderCreator.sol";
 
-import "hardhat/console.sol";
 
 contract EntryPoint is IEntryPoint, StakeManager {
 
