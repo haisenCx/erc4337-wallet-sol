@@ -79,9 +79,9 @@ describe("Send Token", function () {
         // set wallet account owner
         await simpleAccount.initialize(sender.address);
 
-        tokenPaymasterFactory = await ethers.getContractFactory("TokenPaymaster");
+        tokenPaymasterFactory = await ethers.getContractFactory("SWTokenPaymaster");
         tokenPaymaster = await tokenPaymasterFactory.deploy(
-            simpleAccountF.address, "USDTPM", entryPoint.address);
+            simpleAccountF.address, "SWT", entryPoint.address);
         await tokenPaymaster.deployed();
         Log("tokenPaymaster contract address: " + tokenPaymaster.address);
 
@@ -307,9 +307,9 @@ describe("Account Management", function () {
         // set wallet account owner
         await simpleAccount.initialize(sender.address);
 
-        tokenPaymasterFactory = await ethers.getContractFactory("TokenPaymaster");
+        tokenPaymasterFactory = await ethers.getContractFactory("SWTokenPaymaster");
         tokenPaymaster = await tokenPaymasterFactory.deploy(
-            simpleAccountF.address, "USDTPM", entryPoint.address);
+            simpleAccountF.address, "SWT", entryPoint.address);
         await tokenPaymaster.deployed();
         Log("tokenPaymaster contract address: " + tokenPaymaster.address);
 

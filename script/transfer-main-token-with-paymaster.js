@@ -12,13 +12,14 @@ const ETH = (value) => ethers.utils.parseEther(value);
 
 const network_configs = {
     mumbai: {
-        receiver_address: "0xfF171DDfB3236940297808345f7e32C4b5BF097f",
-        send_amount: ETH("0.0001"),
+        receiver_address: "0xF5054F94009B7E9999F6459f40d8EaB1A2ceA22D",
+        send_amount: ETH("0.001"),
         contract_address: {
-            entry_point: "0x5Ef8bfc9cB80cD5E3db36927D481cCD719C3Ac0A",
-            simple_account_factory: "0xFDC09caf246517036FB277c9267C075cc1Cd5B71",
-            simple_account: "0xF83e03Fb6545dc41dD0dE890B31e6b5441f3C9BD",
-            token_paymaster: "0x2feafF6B5fD9Dcfb4817B05196d720cC9d2911b8",
+            entry_point: "0x6FdC82b4500b5B82504DaA465B8CDB9E9dBC48Ef",
+            simple_account_factory: "0x6ACF75E7EA53E85fb97ee62575B4410c27346dDE",
+            simple_account: "0xE737Aae2cbaECc8B0Aad0D7268CCc16a205966b9",
+            // simple_account: "0xef1c4b4a77F604C79AB74A7AB79103C473cDEB1C",
+            token_paymaster: "0xa83C860681d4da28154c225a985aA0C5a5F7E8ED",
         }
     }, ethereum: {},
 }
@@ -58,7 +59,8 @@ async function main() {
 
     const simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
     const simpleAccount = await simpleAccountFactory.attach(config.contract_address.simple_account);
-    const _nonce = await simpleAccount.nonce();
+    const _nonce = "0";
+    // const _nonce = await simpleAccount.nonce();
 
     const senderAddress = config.contract_address.simple_account;
     const nonce = _nonce.toString();
@@ -67,8 +69,8 @@ async function main() {
     const callGasLimit = 210000;
     const verificationGasLimit = 210000;
     const preVerificationGas = 210000;
-    const maxFeePerGas = 6000000000;
-    const maxPriorityFeePerGas = 6000000000;
+    const maxFeePerGas = 2250000024;
+    const maxPriorityFeePerGas = 2250000024;
     let paymasterAndData;
     let signature = "0x";
 
