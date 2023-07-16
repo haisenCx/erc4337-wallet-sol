@@ -32,13 +32,14 @@ async function main() {
 
     let [addr] = await ethers.getSigners();
 
-    console.log("Invoke chain address: " + addr.address);
-    const entryPointFactory = await ethers.getContractFactory("EntryPoint");
-    const entryPoint = await entryPointFactory.deploy()
-    await entryPoint.deployed();
-    console.log("[EntryPoint] address: " + entryPoint.address);
-    console.log("[EntryPoint] ConstructorArguments: " + []);
-    await verifyOnBlockscan(entryPoint.address, [], null)
+    console.log("Deploy contract EOA address: " + addr.address);
+
+    // const entryPointFactory = await ethers.getContractFactory("EntryPoint");
+    // const entryPoint = await entryPointFactory.deploy()
+    // await entryPoint.deployed();
+    // console.log("[EntryPoint] address: " + entryPoint.address);
+    // console.log("[EntryPoint] ConstructorArguments: " + []);
+    // await verifyOnBlockscan(entryPoint.address, [], null)
 
     const simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
     const simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
@@ -47,15 +48,15 @@ async function main() {
     console.log("[SimpleAccountFactory] ConstructorArguments: " + [entryPoint.address]);
     await verifyOnBlockscan(simpleAccountF.address, [entryPoint.address], "contracts/erc4337/samples/SimpleAccountFactory.sol:SimpleAccountFactory")
 
-    const simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
-    const simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
-    await simpleAccount.deployed();
-    console.log("[SimpleAccount] contract address: " + simpleAccount.address);
-    console.log("[SimpleAccount] ConstructorArguments: " + [entryPoint.address]);
-    await verifyOnBlockscan(simpleAccount.address, [entryPoint.address], null)
+    // const simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
+    // const simpleAccount = await simpleAccountFactory.deploy(entryPoint.address);
+    // await simpleAccount.deployed();
+    // console.log("[SimpleAccount] contract address: " + simpleAccount.address);
+    // console.log("[SimpleAccount] ConstructorArguments: " + [entryPoint.address]);
+    // await verifyOnBlockscan(simpleAccount.address, [entryPoint.address], null)
 
     // set wallet account owner
-    await simpleAccount.initialize(addr.address);
+    // await simpleAccount.initialize(addr.address);
 
     const tokenPaymasterFactory = await ethers.getContractFactory("SWTokenPaymaster");
     const tokenPaymaster = await tokenPaymasterFactory.deploy(simpleAccountF.address, "SWT", entryPoint.address);
