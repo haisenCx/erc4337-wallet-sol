@@ -1,10 +1,20 @@
-# Deployed Contract
+# Deployed Contract Address
 
-## Mumbai
+## Tag: v0.1
 
-- owner: 0x27a01491d86F3F3b3085a0Ebe3F640387DBdb0EC
-- EntryPoint contract address: 0x5Ef8bfc9cB80cD5E3db36927D481cCD719C3Ac0A
-- simpleAccount Factory contract address: 0xFDC09caf246517036FB277c9267C075cc1Cd5B71
-- simpleAccount contract address: 0xF83e03Fb6545dc41dD0dE890B31e6b5441f3C9BD
-- tokenPaymaster contract address: 0x2feafF6B5fD9Dcfb4817B05196d720cC9d2911b8
+### Owner
+
+`0x5134F00C95b8e794db38E1eE39397d8086cee7Ed`
+
+### Polygon
+
+- EntryPoint: `0xc3E0A55109c032328F67202c020f7Da2Fddd8B8a`
+- SimpleAccountFactory: `0x188cEaFf80D32373C52837e162A52c82484D3A6b`
+- TokenPaymaster: `0x1B53F0E62e62a7cE76e9018B6701c9CaACfcE9B1`
+
+### Mumbai
+
+- EntryPoint: `0x081d5B6e93B686cEA78B87f5f96Ec274cC6FFe41`
+- SimpleAccountFactory: `0xA02867e1b8410a810Ca3b4875A7A33C89846Ea10`
+- TokenPaymaster: `0x4B63443E5eeecE233AADEC1359254c5C601fB7f4`
 

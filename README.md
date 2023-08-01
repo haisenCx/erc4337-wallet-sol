@@ -49,15 +49,7 @@ npm install
 
 ## Contract Address
 
-### Mumbai Test Network
-
-1. ERC4337
-   - EntryPoint: [0x9441180e0C561c252b3bF7c2048864b7F0A662A6](https://mumbai.polygonscan.com/address/0x9441180e0C561c252b3bF7c2048864b7F0A662A6)
-   - SimpleAccountFactory: [0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e](https://mumbai.polygonscan.com/address/0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e)
-   - Myron's SimpleAccount: [0x884fBD8043BedC0c700577cbB7632D09dB8E35Fd](https://mumbai.polygonscan.com/address/0x884fBD8043BedC0c700577cbB7632D09dB8E35Fd)
-   - TokenPaymaster: [0xa4baa71e173Ef63250fB1D9a1FE1467f722B19C7](https://mumbai.polygonscan.com/address/0xa4baa71e173Ef63250fB1D9a1FE1467f722B19C7)
-2. AA Wallet
-   - UserInfo: [0x29178664bd167967a901b508f953AA38cf33248B](https://mumbai.polygonscan.com/address/0x29178664bd167967a901b508f953AA38cf33248B)
+[Contract Address](./DeployedContract.md)
 
 ## ERC4337
 
@@ -66,8 +58,7 @@ npm install
 
 ## Doc
 1. eip4337: https://eips.ethereum.org/EIPS/eip-4337
-2. eip4337 vitalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes
-   -d75c9d94dc4a
+2. eip4337 vitalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a
 3. AA code source: https://github.com/eth-infinitism/account-abstraction
 4. AA blog by alchemy: https://www.alchemy.com/blog/account-abstraction
 5. Multisign: https://github.com/safe-global/safe-contracts(https://github.com/OpenZeppelin/gnosis-multisig)
