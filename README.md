@@ -58,7 +58,7 @@ npm install
 
 ## Doc
 1. EIP4337: https://eips.ethereum.org/EIPS/eip-4337
-2. RIP4337 vitalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a
+2. EIP4337 vitalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a
 3. AA code source: https://github.com/eth-infinitism/account-abstraction
 4. AA blog by Alchemy: https://www.alchemy.com/blog/account-abstraction
 5. Multi sign: https://github.com/safe-global/safe-contracts(https://github.com/OpenZeppelin/gnosis-multisig)
