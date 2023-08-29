@@ -1,27 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Pool.sol";
 import "@uniswap/v3-core/contracts/interfaces/IUniswapV3Factory.sol";
-import "@uniswap/v3-core/contracts/libraries/OracleLibrary.sol";
+import "@uniswap/v3-periphery/contracts/interfaces/ISwapRouter.sol";
+import "@uniswap/v3-periphery/contracts/libraries/OracleLibrary.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 
-// 交易接口
-interface ISwapRouter {
-    function exactInputSingle(
-        address tokenIn,
-        address tokenOut,
-        uint24 fee,
-        address recipient,
-        uint256 deadline,
-        uint256 amountIn,
-        uint256 amountOutMinimum,
-        uint160 sqrtPriceLimitX96
-    ) external returns (uint256 amountOut);
-}
-
+/*
 // 拿pool的地址
 interface IUniswapV3Factory {
     function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address);
@@ -40,8 +27,22 @@ interface IUniswapV3Pool {
     );
 }
 
+// 交易接口
+interface ISwapRouter {
+    function exactInputSingle(
+        address tokenIn,
+        address tokenOut,
+        uint24 fee,
+        address recipient,
+        uint256 deadline,
+        uint256 amountIn,
+        uint256 amountOutMinimum,
+        uint160 sqrtPriceLimitX96
+    ) external returns (uint256 amountOut);
+}
+
 // 根据tick查报价
-interface IOracleLibrary {
+interface OracleLibrary {
     function getQuoteAtTick(
         int24 tick,
         uint128 baseAmount,
@@ -49,13 +50,28 @@ interface IOracleLibrary {
         address quoteToken
     ) external pure returns (uint256 quoteAmount);
 }
+*/
 
 contract TradeStrategyRobot is Ownable{
     // 维护一个strategyId
     uint256 private _strategyId = 0;
 
     // 价格波动阈值
-    uint256 private _priceThreshold = 0.01;
+    uint256 private _priceThreshold = 1000;
+
+    //fee
+    uint24 private _fee = 3000;
+
+    struct ExactInputSingleParams {
+        address tokenIn;
+        address tokenOut;
+        uint24 fee;
+        address recipient;
+        uint256 deadline;
+        uint256 amountIn;
+        uint256 amountOutMinimum;
+        uint160 sqrtPriceLimitX96;
+    }
 
     // strategyId -> owner
     mapping(uint256 => address) private _strategyOwners;
@@ -65,20 +81,22 @@ contract TradeStrategyRobot is Ownable{
 
     ISwapRouter public swapRouter;
     IUniswapV3Factory public uniswapFactory;
+    address swapRouterAddr;
+
+    event SwapSuccess(uint256 amountOut);
 
     constructor(address swapRouterAddress, address uniswapFactoryAddress) {
+        swapRouterAddr = swapRouterAddress;
         // 初始化SwapRouter实例
         swapRouter = ISwapRouter(swapRouterAddress);
         // 初始化UniswapV3Factory实例
         uniswapFactory = IUniswapV3Factory(uniswapFactoryAddress);
     }
 
-    event swapSuccess(uint256 amountOut);
-
     // 添加策略
     function addStrategy(address tokenFrom, address tokenTo, uint256 tokenFromNum, uint256 price) public returns (uint256) {
         _strategyId++;
-        bytes32 memory strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, price);
+        bytes32 strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, price);
         _strategyContents[_strategyId] = strategyValue;
         _strategyOwners[_strategyId] = msg.sender;
         return _strategyId;
@@ -87,58 +105,68 @@ contract TradeStrategyRobot is Ownable{
     // 执行交易
     function execSwap(uint256 strategyId, address tokenFrom, address tokenTo, uint256 tokenFromNum, uint256 price) public {
         // 只能由策略的owner发起交易
-        require(msg.sender == strategyToOwner[strategyId], "Not the owner of the strategy");
+        require(msg.sender == _strategyOwners[strategyId], "Not the owner of the strategy");
 
         // 从Uniswap获取报价，验证报价是否在波动范围内
         address poolAddress = getPoolAddressFromTokenPair(tokenFrom, tokenTo);
         int24 tick = getCurrentTick(poolAddress);
-        uint256 quoteAmount = IOracleLibrary.getQuoteAtTick(tick, tokenFromNum, tokenFrom, tokenTo);
+        uint256 quoteAmount = OracleLibrary.getQuoteAtTick(tick, uint128(tokenFromNum), tokenFrom, tokenTo);
         uint256 priceAbsDiff = quoteAmount > price ? quoteAmount - price : price - quoteAmount;
         require(priceAbsDiff < _priceThreshold, "Price difference is too large");
         
         // 验证策略是否一致
-        bytes32 memory strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, uint256(price));
-        require(strategyToValue[strategyId] == strategyValue, "Strategy does not match");
+        bytes32 strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, price);
+        require(_strategyContents[strategyId] == strategyValue, "Strategy does not match");
 
         // 转移资产到本合约
         IERC20(tokenFrom).transferFrom(msg.sender, address(this), tokenFromNum);
 
         // 授权资产给Uniswap
-        IERC20(tokenFrom).approve(swapRouterAddress, tokenFromNum);
+        IERC20(tokenFrom).approve(swapRouterAddr, tokenFromNum);
 
         // 调用Uniswap的swap函数
-        uint256 amountOut = swapRouter.exactInputSingle(
+        ISwapRouter.ExactInputSingleParams memory swapParams = ISwapRouter.ExactInputSingleParams(
             tokenFrom,
             tokenTo,
-            3000,
+            _fee,
             msg.sender,
             block.timestamp,//
             tokenFromNum,
             0,//
             0//
         );
+        uint256 amountOut = swapRouter.exactInputSingle(swapParams);
 
-        emit swapSuccess(amountOut);
+        emit SwapSuccess(amountOut);
     }
 
     // 生成hash值
-    function hashValue(address tokenFrom, address tokenTo, uint256 tokenFromNum, uint256 price) internal pure returns (bytes32 memory) {
+    function hashValue(address tokenFrom, address tokenTo, uint256 tokenFromNum, uint256 price) public pure returns (bytes32) {
         return keccak256(abi.encodePacked(tokenFrom, tokenTo, tokenFromNum, price));
     }
 
     // 从token对获取pool地址
     function getPoolAddressFromTokenPair(address tokenFrom, address tokenTo) internal view returns (address) {
-        return uniswapFactory.getPool(tokenFrom, tokenTo, 3000);
+        return uniswapFactory.getPool(tokenFrom, tokenTo, _fee);
     }
 
     // 拿tick
-    function getCurrentTick(address poolAddress) public view returns (int24 tick) {
+    function getCurrentTick(address poolAddress) internal view returns (int24 tick) {
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
         (, tick, , , , , ) = pool.slot0();
     }
 
     // 修改价格波动阈值
-    function setPriceThreshold(uint256 newPriceThreshold) public onlyOwner {
+    function setPriceThreshold(uint256 newPriceThreshold) internal onlyOwner {
         _priceThreshold = newPriceThreshold;
     }
+
+    // 接收Ether的receive函数
+    receive() external payable {
+    }
+
+    function getStrategyContent(uint256 strategyId) external view returns (bytes32) {
+        return _strategyContents[strategyId];
+    }
+
 }
