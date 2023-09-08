@@ -52,12 +52,12 @@ interface OracleLibrary {
 }
 */
 
-contract TradeStrategyRobot is Ownable{
+contract AutoTrading is Ownable {
     // 维护一个strategyId
     uint256 private _strategyId = 0;
 
-    // 价格波动阈值
-    uint256 private _priceThreshold = 1000;
+    // TODO 与预期收入波动阈值，应该配置成每个策略对应一个值
+    uint256 private _tokenToNumDIffThreshold = 1000;
 
     //fee
     uint24 private _fee = 3000;
@@ -83,7 +83,8 @@ contract TradeStrategyRobot is Ownable{
     IUniswapV3Factory public uniswapFactory;
     address swapRouterAddr;
 
-    event SwapSuccess(uint256 amountOut);
+    event SwapSuccess(uint256 _strategyId, uint256 amountOut);
+    event AddStrategySuccess(address owner, uint256 _strategyId);
 
     constructor(address swapRouterAddress, address uniswapFactoryAddress) {
         swapRouterAddr = swapRouterAddress;
@@ -99,23 +100,30 @@ contract TradeStrategyRobot is Ownable{
         bytes32 strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, price);
         _strategyContents[_strategyId] = strategyValue;
         _strategyOwners[_strategyId] = msg.sender;
+
+        emit AddStrategySuccess(msg.sender, _strategyId);
+
         return _strategyId;
     }
 
+    function getTokenToNum(address tokenFrom, address tokenTo, uint256 tokenFromNum) public view returns (uint256) {
+        address poolAddress = getPoolAddressFromTokenPair(tokenFrom, tokenTo);
+        int24 tick = getCurrentTick(poolAddress);
+        return OracleLibrary.getQuoteAtTick(tick, uint128(tokenFromNum), tokenFrom, tokenTo);
+    }
+
     // 执行交易
-    function execSwap(uint256 strategyId, address tokenFrom, address tokenTo, uint256 tokenFromNum, uint256 price) public {
+    function execSwap(uint256 strategyId, address tokenFrom, address tokenTo, uint256 tokenFromNum, uint256 tokenToNum) public {
         // 只能由策略的owner发起交易
         require(msg.sender == _strategyOwners[strategyId], "Not the owner of the strategy");
 
         // 从Uniswap获取报价，验证报价是否在波动范围内
-        address poolAddress = getPoolAddressFromTokenPair(tokenFrom, tokenTo);
-        int24 tick = getCurrentTick(poolAddress);
-        uint256 quoteAmount = OracleLibrary.getQuoteAtTick(tick, uint128(tokenFromNum), tokenFrom, tokenTo);
-        uint256 priceAbsDiff = quoteAmount > price ? quoteAmount - price : price - quoteAmount;
-        require(priceAbsDiff < _priceThreshold, "Price difference is too large");
+        uint256 quoteAmount = getTokenToNum(tokenFrom, tokenTo, tokenFromNum);
+        uint256 priceAbsDiff = quoteAmount > tokenToNum ? quoteAmount - tokenToNum : tokenToNum - quoteAmount;
+        require(priceAbsDiff < _tokenToNumDIffThreshold, "Price difference is too large");
         
         // 验证策略是否一致
-        bytes32 strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, price);
+        bytes32 strategyValue = hashValue(tokenFrom, tokenTo, tokenFromNum, tokenToNum);
         require(_strategyContents[strategyId] == strategyValue, "Strategy does not match");
 
         // 转移资产到本合约
@@ -130,14 +138,15 @@ contract TradeStrategyRobot is Ownable{
             tokenTo,
             _fee,
             msg.sender,
-            block.timestamp,//
+            block.timestamp, //
             tokenFromNum,
-            0,//
+            0, //
             0//
         );
         uint256 amountOut = swapRouter.exactInputSingle(swapParams);
 
-        emit SwapSuccess(amountOut);
+        // TODO 添加验证，不满足条件直接revert回滚
+        emit SwapSuccess(strategyId, amountOut);
     }
 
     // 生成hash值
@@ -153,12 +162,12 @@ contract TradeStrategyRobot is Ownable{
     // 拿tick
     function getCurrentTick(address poolAddress) internal view returns (int24 tick) {
         IUniswapV3Pool pool = IUniswapV3Pool(poolAddress);
-        (, tick, , , , , ) = pool.slot0();
+        (, tick,,,,,) = pool.slot0();
     }
 
     // 修改价格波动阈值
     function setPriceThreshold(uint256 newPriceThreshold) internal onlyOwner {
-        _priceThreshold = newPriceThreshold;
+        _tokenToNumDIffThreshold = newPriceThreshold;
     }
 
     // 接收Ether的receive函数

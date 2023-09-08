@@ -9,8 +9,14 @@
 ### Install
 
 ```shell
+# commom package
 npm install
+
+# install uniswap package
+npm install --save-dev @uniswap/v3-core@1.0.2-solc-0.8-simulate
+npm install --save-dev git+https://github.com/Uniswap/v3-periphery.git#0.8
 ```
+
 
 ### Set env
 
@@ -37,14 +43,9 @@ npm install
    ```shell
    npm run deploy-erc4337-mumbai
    ```
-2. Deploy AA Wallet
+2. Deploy auto trading
    ```shell
    npm run deploy-aawallet-mumbai
-   ```
-3. Verify on blockchain
-   ```shell
-   # modify params according to 1&2 result
-   npm run verify-mumbai
    ```
 
 ## Contract Address

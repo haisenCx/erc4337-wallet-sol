@@ -34,18 +34,38 @@ async function main() {
 
     let [addr] = await ethers.getSigners();
 
-    console.log("address: " + addr.address);
-    const userInfoFactory = await ethers.getContractFactory("UserInfo");
-    const userInfo = await userInfoFactory.deploy()
-    await userInfo.deployed();
-    console.log("UserInfo contract address: " + userInfo.address);
+    console.log("Your address: " + addr.address);
+    const userInfoFactory = await ethers.getContractFactory("AutoTrading");
+    const params = ["0xE592427A0AEce92De3Edee1F18E0157C05861564", "0x1F98431c8aD98523631AE4a59f267346ea31F984"];
+    const autoTrading = await userInfoFactory.deploy(params[0], params[1]);
+    await autoTrading.deployed();
+    console.log("AutoTrading contract address: " + autoTrading.address);
 
-    // verify the contracts
-    await hre.run("verify:verify", {
-        address: userInfo.address,
-        constructorArguments: [],
-    });
+    await verifyOnBlockscan(autoTrading.address, params, "contracts/aawallet/AutoTrading.sol:AutoTrading")
 }
+
+async function verifyOnBlockscan(address, args, contractPath) {
+    let success = false;
+    while (!success) {
+        try {
+            let params = {
+                address: address,
+                constructorArguments: args,
+            };
+            if (contractPath != null) {
+                params["contract"] = contractPath;
+            }
+            await hre.run("verify:verify", params);
+            console.log("verify successfully");
+            success = true;
+        } catch (error) {
+            console.log(`Script failed: ${error}`);
+            console.log(`Trying again in 3 seconds...`);
+            await new Promise((resolve) => setTimeout(resolve, 3000));
+        }
+    }
+}
+
 
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
