@@ -8,7 +8,9 @@ const hre = require("hardhat");
 
 const network_configs = {
     mumbai: {
-    }, ethereum: {
+        struct_params: ["0xE592427A0AEce92De3Edee1F18E0157C05861564", "0x1F98431c8aD98523631AE4a59f267346ea31F984"]
+    }, polygon: {
+        struct_params: ["0xE592427A0AEce92De3Edee1F18E0157C05861564", "0x1F98431c8aD98523631AE4a59f267346ea31F984"]
     },
 }
 
@@ -36,7 +38,7 @@ async function main() {
 
     console.log("Your address: " + addr.address);
     const userInfoFactory = await ethers.getContractFactory("AutoTrading");
-    const params = ["0xE592427A0AEce92De3Edee1F18E0157C05861564", "0x1F98431c8aD98523631AE4a59f267346ea31F984"];
+    const params = config.struct_params;
     const autoTrading = await userInfoFactory.deploy(params[0], params[1]);
     await autoTrading.deployed();
     console.log("AutoTrading contract address: " + autoTrading.address);
