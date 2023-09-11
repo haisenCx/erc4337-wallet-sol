@@ -50,7 +50,7 @@ npm install --save-dev git+https://github.com/Uniswap/v3-periphery.git#0.8
 
 ## Contract Address
 
-[Contract Address](./DeployedContract.md)
+[Contract Address](./contract-info.md)
 
 ## ERC4337
 

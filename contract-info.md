@@ -1,6 +1,6 @@
-# Deployed Contract Address
+# Contract Info
 
-### Owner
+### Smarter Wallet EOA Address
 
 `0x5134F00C95b8e794db38E1eE39397d8086cee7Ed`
 
@@ -10,12 +10,22 @@
 
 ### Polygon
 
-- USWT(ERC20 Test): ``
+- USWT(ERC20 Test): `0x551f0af25C72453261e16cC01F5865C5ED0B715F`
 
 ### Mumbai
 
 - USWT(ERC20 Test): `0xF981Ac497A0fe7ad2Dd670185c6e7D511Bf36d6d`
 
+### Uniswap
+
+[Uniswap Contract Deployments](https://docs.uniswap.org/contracts/v3/reference/deployments)
+
+#### SWT&USWT Pool
+
+> fee=3000
+
+- Polygon: `0x1EF449D7c7ecbD61c00EddAFe223CaBA26AD78f6`
+- Mumbai: `0x72bF3CabEabF6a3f10b913D0f4Bf15D397032BA0`
 
 ## Tag: v0.1
 
