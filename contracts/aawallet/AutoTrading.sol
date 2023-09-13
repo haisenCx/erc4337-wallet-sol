@@ -41,8 +41,8 @@ contract AutoTrading is Ownable {
     IUniswapV3Factory public uniswapFactory;
     address swapRouterAddr;
 
-    event SwapSuccess(uint256 _strategyId, uint256 amountOut);
-    event AddStrategySuccess(address owner, uint256 _strategyId);
+    event SwapSuccess(uint256 indexed _strategyId, uint256 amountOut);
+    event AddStrategySuccess(address indexed owner, uint256 indexed _strategyId);
 
     constructor(address swapRouterAddress, address uniswapFactoryAddress) {
         swapRouterAddr = swapRouterAddress;

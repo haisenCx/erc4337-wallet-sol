@@ -45,7 +45,7 @@ npm install --save-dev git+https://github.com/Uniswap/v3-periphery.git#0.8
    ```
 2. Deploy auto trading
    ```shell
-   npm run deploy-aawallet-mumbai
+   npm run deploy-autotrading-mumbai
    ```
 
 ## Contract Address
