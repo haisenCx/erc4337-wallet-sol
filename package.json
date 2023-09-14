@@ -13,8 +13,6 @@
     "event-hash": "npx hardhat test --network hardhat test/calc-event-hash.js",
     "deploy-erc4337-polygon": "npx hardhat --network polygon run script/deploy-erc4337.js",
     "deploy-erc4337-mumbai": "npx hardhat --network mumbai run script/deploy-erc4337.js",
-    "deploy-autotrading-mumbai": "npx hardhat --network mumbai run script/deploy-autotrading.js",
-    "deploy-autotrading-polygon": "npx hardhat --network polygon run script/deploy-autotrading.js",
     "verify-mumbai": "npx hardhat --network mumbai run script/verify-blockscan.js",
     "transfer-without-pay": "npx hardhat --network mumbai run script/transfer-main-token-without-paymaster.js",
     "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-main-token-with-paymaster.js",
