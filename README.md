@@ -11,12 +11,7 @@
 ```shell
 # commom package
 npm install
-
-# install uniswap package
-npm install --save-dev @uniswap/v3-core@1.0.2-solc-0.8-simulate
-npm install --save-dev git+https://github.com/Uniswap/v3-periphery.git#0.8
 ```
-
 
 ### Set env
 
@@ -33,19 +28,34 @@ npm install --save-dev git+https://github.com/Uniswap/v3-periphery.git#0.8
    
 ## Test
 
+1. Test entrypoint
+    ```shell
+    npm run entry-test
+    ```
+2. Test sign
+    ```shell
+    npm run sign-test
+    ```
+3. Test event-hash
+    ```shell
+    npm run event-hash
+    ```
 
 
 ## Deploy
+
+### Polgon Network
+
+1. Deploy ERC4337 component
+   ```shell
+   npm run deploy-erc4337-polygon
+   ```
 
 ### Mumbai Test Network
 
 1. Deploy ERC4337 component
    ```shell
    npm run deploy-erc4337-mumbai
-   ```
-2. Deploy auto trading
-   ```shell
-   npm run deploy-autotrading-mumbai
    ```
 
 ## Contract Address
