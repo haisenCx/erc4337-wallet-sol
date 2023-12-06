@@ -96,6 +96,9 @@ module.exports = {
         }, polygon: {
             url: 'https://polygon-mainnet.g.alchemy.com/v2/DM_dA_cDWvI6a2IfGOe0RhDVWyXhvmYN',
             accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
+        }, fuji: {
+            url: 'https://api.avax-test.network/ext/C/rpc',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
         }
     },
     gasReporter: {
