@@ -4,7 +4,7 @@ pragma solidity ^0.8.12;
 /* solhint-disable reason-string */
 
 import "../interfaces/IAggregator.sol";
-import "./SimpleAccount.sol";
+import "./SmarterAccountV1.sol";
 
 /**
  * test signature aggregator.

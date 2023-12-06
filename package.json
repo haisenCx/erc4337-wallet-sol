@@ -14,6 +14,7 @@
     "deploy-erc4337-polygon": "npx hardhat --network polygon run script/deploy-erc4337.js",
     "deploy-erc4337-mumbai": "npx hardhat --network mumbai run script/deploy-erc4337.js",
     "verify-mumbai": "npx hardhat --network mumbai run script/verify-blockscan.js",
+    "create-wallet": "npx hardhat --network mumbai run script/create-wallet.js",
     "transfer-no-pay": "npx hardhat --network mumbai run script/transfer-main-token-without-paymaster.js",
     "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-main-token-with-paymaster.js",
     "verify": "npx hardhat --network mumbai run script/verify-blockscan.js"

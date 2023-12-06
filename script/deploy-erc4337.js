@@ -6,8 +6,17 @@
 const {ethers} = require("hardhat");
 const hre = require("hardhat");
 
+// TODO params
 const network_configs = {
-    mumbai: {}, ethereum: {}, polygon: {},
+    mumbai: {
+        _eth_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+        _usdc_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+        _usdc_address: "0x0715A7794a1dc8e42615F059dD6e406A6594651A"
+    }, ethereum: {}, polygon: {}, fuji: {
+        _eth_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+        _usdc_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
+        _usdc_address: "0x0715A7794a1dc8e42615F059dD6e406A6594651A"
+    }
 }
 
 let config;
@@ -24,6 +33,8 @@ async function main() {
 
     if (hre.network.name === "mumbai") {
         config = network_configs.mumbai
+    } else if (hre.network.name === "fuji") {
+        config = network_configs.fuji
     } else {
         config = network_configs.ethereum
     }
@@ -34,29 +45,29 @@ async function main() {
 
     console.log("Deploy contract EOA address: " + addr.address);
 
-    console.log("[EntryPoint] start to deploy");
+    console.log("[EntryPoint] Start to deploy");
     const entryPointFactory = await ethers.getContractFactory("EntryPoint");
     const entryPoint = await entryPointFactory.deploy()
     await entryPoint.deployed();
-    console.log("[EntryPoint] address: " + entryPoint.address);
+    console.log("[EntryPoint] Address: " + entryPoint.address);
     console.log("[EntryPoint] ConstructorArguments: " + []);
     await verifyOnBlockscan(entryPoint.address, [], null)
 
-    console.log("[SimpleAccountFactory] start to deploy");
-    const simpleAccountFFactory = await ethers.getContractFactory("SimpleAccountFactory");
-    const simpleAccountF = await simpleAccountFFactory.deploy(entryPoint.address);
-    await simpleAccountF.deployed();
-    console.log("[SimpleAccountFactory] contract address: " + simpleAccountF.address);
-    console.log("[SimpleAccountFactory] ConstructorArguments: " + [entryPoint.address]);
-    await verifyOnBlockscan(simpleAccountF.address, [entryPoint.address], "contracts/erc4337/samples/SimpleAccountFactory.sol:SimpleAccountFactory")
+    console.log("[SmarterAccountV1Factory] Start to deploy");
+    const smarterAccountV1FFactory = await ethers.getContractFactory("SmarterAccountV1Factory");
+    const smarterAccountV1F = await smarterAccountV1FFactory.deploy(entryPoint.address);
+    await smarterAccountV1F.deployed();
+    console.log("[SmarterAccountV1Factory] Contract address: " + smarterAccountV1F.address);
+    console.log("[SmarterAccountV1Factory] ConstructorArguments: " + [entryPoint.address]);
+    await verifyOnBlockscan(smarterAccountV1F.address, [entryPoint.address], "contracts/erc4337/samples/SmarterAccountV1Factory.sol:SmarterAccountV1Factory")
 
-    console.log("[TokenPaymaster] start to deploy");
-    const tokenPaymasterFactory = await ethers.getContractFactory("SWTokenPaymaster");
-    const tokenPaymaster = await tokenPaymasterFactory.deploy(simpleAccountF.address, "SWT", entryPoint.address);
+    console.log("[USDCTokenPaymaster] Start to deploy");
+    const tokenPaymasterFactory = await ethers.getContractFactory("USDCTokenPaymaster");
+    const tokenPaymaster = await tokenPaymasterFactory.deploy(smarterAccountV1F.address, entryPoint.address, config._eth_usd_aggregator, config._usdc_usd_aggregator, config._usdc_address);
     await tokenPaymaster.deployed();
-    console.log("[TokenPaymaster] contract address: " + tokenPaymaster.address);
-    console.log("[TokenPaymaster] ConstructorArguments: " + [simpleAccountF.address, "SWT", entryPoint.address]);
-    await verifyOnBlockscan(tokenPaymaster.address, [simpleAccountF.address, "SWT", entryPoint.address], null)
+    console.log("[USDCTokenPaymaster] Contract address: " + tokenPaymaster.address);
+    console.log("[USDCTokenPaymaster] ConstructorArguments: " + [smarterAccountV1F.address, entryPoint.address, config._eth_usd_aggregator, config._usdc_usd_aggregator, config._usdc_address]);
+    await verifyOnBlockscan(tokenPaymaster.address, [smarterAccountV1F.address, entryPoint.address, config._eth_usd_aggregator, config._usdc_usd_aggregator, config._usdc_address], null)
 
     console.log("[Success] All contracts have been deployed success.")
 }
