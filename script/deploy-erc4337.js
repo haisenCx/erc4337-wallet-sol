@@ -6,16 +6,16 @@
 const {ethers} = require("hardhat");
 const hre = require("hardhat");
 
-// TODO params
 const network_configs = {
     mumbai: {
         _eth_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
-        _usdc_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
-        _usdc_address: "0x0715A7794a1dc8e42615F059dD6e406A6594651A"
-    }, ethereum: {}, polygon: {}, fuji: {
-        _eth_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
-        _usdc_usd_aggregator: "0x0715A7794a1dc8e42615F059dD6e406A6594651A",
-        _usdc_address: "0x0715A7794a1dc8e42615F059dD6e406A6594651A"
+        _usdc_usd_aggregator: "0x572dDec9087154dC5dfBB1546Bb62713147e0Ab0",
+        _usdc_address: "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97"
+    }, ethereum: {}, polygon: {},
+    fuji: {
+        _eth_usd_aggregator: "0x86d67c3D38D2bCeE722E601025C25a575021c6EA",
+        _usdc_usd_aggregator: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
+        _usdc_address: "0x5425890298aed601595a70AB815c96711a31Bc65"
     }
 }
 

@@ -138,11 +138,20 @@ contract USDCTokenPaymaster is BasePaymaster {
         return address(usdc_usd_aggregator);
     }
 
-    function updateEthUsdAggregatorAddress(address _eth_usd_aggregator) public onlyOwner() {
+    function updateEthUsdAggregatorAddress(address _eth_usd_aggregator) public onlyOwner {
         eth_usd_aggregator = AggregatorV3Interface(_eth_usd_aggregator);
     }
 
-    function updateUsdcUsdAggregatorAddress(address _usdc_usd_aggregator) public onlyOwner() {
+    function updateUsdcUsdAggregatorAddress(address _usdc_usd_aggregator) public onlyOwner {
         usdc_usd_aggregator = AggregatorV3Interface(_usdc_usd_aggregator);
+    }
+
+    /**
+     * withdraw USDC from the contract
+     * @param withdrawAddress target to send to
+     * @param amount to withdraw
+     */
+    function withdrawTokenTo(address payable withdrawAddress, uint256 amount) public onlyOwner {
+        _usdc.transfer(withdrawAddress, amount);
     }
 }
