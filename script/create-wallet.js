@@ -16,8 +16,8 @@ const network_configs = {
         send_amount: ETH("0.001"),
         contract_address: {
             entry_point: "0x6FdC82b4500b5B82504DaA465B8CDB9E9dBC48Ef",
-            simple_account_factory: "0x6ACF75E7EA53E85fb97ee62575B4410c27346dDE",
-            simple_account: "0x57fab4Aeb3D2F30D8965aD1eB4BAf2c306cAE610",
+            simple_account_factory: "0xA02867e1b8410a810Ca3b4875A7A33C89846Ea10",
+            simple_account: "0x862941F2381E28b4074EB341E7c8cD68Dd31883e",
             token_paymaster: "0x4B63443E5eeecE233AADEC1359254c5C601fB7f4",
         }
     }, ethereum: {},
@@ -25,11 +25,10 @@ const network_configs = {
 
 let config;
 
-function sendMainTokenCall(toAddress, amount) {
-    // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
-    let ABI = ["function execute(address dest, uint256 value, bytes calldata func)"];
+function createWallet(address, nonce) {
+    let ABI = ["function createAccount(address owner,uint256 salt)"];
     let iface = new ethers.utils.Interface(ABI);
-    return iface.encodeFunctionData("execute", [toAddress, amount, "0x"]);
+    return iface.encodeFunctionData("createAccount", [address, nonce]);
 }
 
 async function main() {
@@ -56,21 +55,29 @@ async function main() {
     const entryPointFactory = await ethers.getContractFactory("EntryPoint");
     const entryPoint = await entryPointFactory.attach(config.contract_address.entry_point);
 
-    const simpleAccountFactory = await ethers.getContractFactory("SimpleAccount");
-    const simpleAccount = await simpleAccountFactory.attach(config.contract_address.simple_account);
-    // const _nonce = "0";
-    const _nonce = await simpleAccount.nonce();
+    const simpleAccountFactoryFactory = await ethers.getContractFactory("SimpleAccountFactory");
+    const simpleAccountFactory = await simpleAccountFactoryFactory.attach(config.contract_address.simple_account_factory);
+    
+    const simpleAccountFactory1 = await ethers.getContractFactory("SimpleAccount");
+    const simpleAccount = await simpleAccountFactory1.attach(config.contract_address.simple_account);
+    // const _nonce = await simpleAccount.nonce();
 
-    const ownerFromContract = await simpleAccount.owner();
-    console.log("ownerFromContract:", ownerFromContract);
+    const ownerAddress = addr.address;
+    const senderAddress = simpleAccount.address;
+    const nonce = "0";
+    // const nonce = _nonce.toString();
+    const initCodeContractAddress = simpleAccountFactory.address;
 
-    const senderAddress = config.contract_address.simple_account;
-    const nonce = _nonce.toString();
-    const initCode = "0x";
-    const callData = sendMainTokenCall(config.receiver_address, config.send_amount);
-    const callGasLimit = 210000;
-    const verificationGasLimit = 210000;
-    const preVerificationGas = 210000;
+    // 使用ethers.js的Interface对象来编码调用数据
+    const createWalletOwner = "0x5134F00C95b8e794db38E1eE39397d8086cee7Ed";
+    const createWalletNonce = 1;
+    const initCodeParams = createWallet(createWalletOwner, createWalletNonce);
+    const initCode = `0x${config.contract_address.simple_account_factory.toLowerCase().replace('0x', '')}${initCodeParams.toLowerCase().replace('0x', '')}`;
+
+    const callData = "0x";
+    const callGasLimit = 1500000;
+    const verificationGasLimit = 1500000;
+    const preVerificationGas = 1500000;
     const maxFeePerGas = 2250000024;
     const maxPriorityFeePerGas = 2250000024;
     let paymasterAndData;

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.12;
 
-import "../samples/SimpleAccount.sol";
+import "../samples/SmarterAccountV1.sol";
 import "./IBLSAccount.sol";
 
 /**
@@ -11,13 +11,13 @@ import "./IBLSAccount.sol";
  * (normal SimpleAccount uses its "signer" address as both the ecrecover signer, and as a legitimate
  * Ethereum sender address. Obviously, a BLS public is not a valid Ethereum sender address.)
  */
-contract BLSAccount is SimpleAccount, IBLSAccount {
+contract BLSAccount is SmarterAccountV1, IBLSAccount {
     address public immutable aggregator;
     uint256[4] private publicKey;
 
     // The constructor is used only for the "implementation" and only sets immutable values.
     // Mutable values slots for proxy accounts are set by the 'initialize' function.
-    constructor(IEntryPoint anEntryPoint, address anAggregator) SimpleAccount(anEntryPoint)  {
+    constructor(IEntryPoint anEntryPoint, address anAggregator) SmarterAccountV1(anEntryPoint)  {
         aggregator = anAggregator;
     }
 

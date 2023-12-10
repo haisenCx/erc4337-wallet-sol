@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-only
 pragma solidity ^0.8.12;
 
-import "../samples/SimpleAccount.sol";
+import "../samples/SmarterAccountV1.sol";
 
 /**
  * A test account, for testing expiry.
@@ -10,14 +10,14 @@ import "../samples/SimpleAccount.sol";
  * other things, like target contracts and methods to be called.
  * also, the "since" value is not really useful, only for testing the entrypoint.
  */
-contract TestExpiryAccount is SimpleAccount {
+contract TestExpiryAccount is SmarterAccountV1 {
     using ECDSA for bytes32;
 
     mapping(address => uint64) public ownerAfter;
     mapping(address => uint64) public ownerUntil;
 
     // solhint-disable-next-line no-empty-blocks
-    constructor(IEntryPoint anEntryPoint) SimpleAccount(anEntryPoint) {}
+    constructor(IEntryPoint anEntryPoint) SmarterAccountV1(anEntryPoint) {}
 
     function initialize(address anOwner) public virtual override initializer {
         super._initialize(anOwner);

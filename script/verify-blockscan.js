@@ -27,7 +27,7 @@ const network_configs = {
                 name: "SimpleAccountFactory",
                 address: "0xD640F8f864a212CfDd8FE8B9Fdfb69d24f09b65e",
                 arguments: ["0x9441180e0C561c252b3bF7c2048864b7F0A662A6"],
-                path: "contracts/erc4337/samples/SimpleAccountFactory.sol:SimpleAccountFactory"
+                path: "contracts/erc4337/samples/SmarterAccountV1Factory.sol:SimpleAccountFactory"
             },
             {
                 name: "SimpleAccount",

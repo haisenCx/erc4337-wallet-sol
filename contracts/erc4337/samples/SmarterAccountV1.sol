@@ -8,7 +8,6 @@ pragma solidity ^0.8.12;
 import "@openzeppelin/contracts/utils/cryptography/ECDSA.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 import "../core/BaseAccount.sol";
 
@@ -18,14 +17,12 @@ import "../core/BaseAccount.sol";
   *  has execute, eth handling methods
   *  has a single signer that can send requests through the entryPoint.
   */
-contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
+contract SmarterAccountV1 is BaseAccount, UUPSUpgradeable, Initializable {
     using ECDSA for bytes32;
 
     //explicit sizes of nonce, to fit a single storage cell with "owner"
     uint96 private _nonce;
     address public owner;
-    address public _tokenPaymaster;
-
 
     function nonce() public view virtual override returns (uint256) {
         return _nonce;
@@ -37,16 +34,13 @@ contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
 
     IEntryPoint private immutable _entryPoint;
 
-
-
-    event USDCSimpleAccountInitialized(IEntryPoint indexed entryPoint, address indexed owner, address indexed tokenPaymaster);
+    event SimpleAccountInitialized(IEntryPoint indexed entryPoint, address indexed owner);
 
     // solhint-disable-next-line no-empty-blocks
     receive() external payable {}
 
     constructor(IEntryPoint anEntryPoint) {
         _entryPoint = anEntryPoint;
-
     }
 
     modifier onlyOwner() {
@@ -54,19 +48,9 @@ contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
         _;
     }
 
-    modifier onlyTokenAccount() {
-        _onlyTokenAddress();
-        _;
-    }
-
     function _onlyOwner() internal view {
         //directly from EOA owner, or through the entryPoint (which gets redirected through execFromEntryPoint)
         require(msg.sender == owner || msg.sender == address(this), "only owner");
-    }
-
-    function _onlyTokenAddress() internal view {
-        //directly from EOA owner, or through the entryPoint (which gets redirected through execFromEntryPoint)
-        require(msg.sender == _tokenPaymaster || msg.sender == owner || msg.sender == address(this), "only token payment");
     }
 
     /**
@@ -89,18 +73,28 @@ contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     }
 
     /**
+     * execute a sequence of transaction
+     */
+    function executeBatch(address[] calldata dest, uint256[] calldata values, bytes[] calldata func) external {
+        _requireFromEntryPointOrOwner();
+        require(dest.length == func.length && func.length == values.length, "wrong array lengths");
+        for (uint256 i = 0; i < dest.length; i++) {
+            _call(dest[i], values[i], func[i]);
+        }
+    }
+
+    /**
      * change entry-point:
      * an account must have a method for replacing the entryPoint, in case the the entryPoint is
      * upgraded to a newer version.
      */
-    function initialize(address anOwner, address anTokenPaymaster) public virtual initializer {
-        _initialize(anOwner, anTokenPaymaster);
+    function initialize(address anOwner) public virtual initializer {
+        _initialize(anOwner);
     }
 
-    function _initialize(address anOwner, address anTokenPaymaster) internal virtual {
+    function _initialize(address anOwner) internal virtual {
         owner = anOwner;
-        _tokenPaymaster = anTokenPaymaster;
-        emit USDCSimpleAccountInitialized(_entryPoint, owner, _tokenPaymaster);
+        emit SimpleAccountInitialized(_entryPoint, owner);
     }
 
     /**
@@ -130,7 +124,7 @@ contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     }
 
     function _call(address target, uint256 value, bytes memory data) internal {
-        (bool success, bytes memory result) = target.call{value: value}(data);
+        (bool success, bytes memory result) = target.call{value : value}(data);
         if (!success) {
             assembly {
                 revert(add(result, 32), mload(result))
@@ -150,7 +144,7 @@ contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
      */
     function addDeposit() public payable {
 
-        (bool req,) = address(entryPoint()).call{value: msg.value}("");
+        (bool req,) = address(entryPoint()).call{value : msg.value}("");
         require(req);
     }
 
@@ -166,10 +160,6 @@ contract USDCSimpleAccount is BaseAccount, UUPSUpgradeable, Initializable {
     function _authorizeUpgrade(address newImplementation) internal view override {
         (newImplementation);
         _onlyOwner();
-    }
-
-    function transfer(address erc20Address, address to, uint256 amount) public onlyTokenAccount {
-        ERC20(erc20Address).transfer(to, amount);
     }
 }
 
