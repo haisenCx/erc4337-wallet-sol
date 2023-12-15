@@ -3,7 +3,6 @@ const { arrayify } = require("@ethersproject/bytes");
 const { BigNumber } = require("@ethersproject/bignumber");
 const { ethers } = require('hardhat');
 
-
 const networkConfigs = {
     mumbai: {
         contractAddress: {
@@ -17,6 +16,20 @@ const networkConfigs = {
     }
 };
 
+function getConfig() {
+    console.log("networkConfigs:", networkConfigs)
+    config = networkConfigs[hre.network.name]
+    console.log("Network:", hre.network.name);
+    console.log("Config:", config);
+    return config;
+}
+
+function getInitCode(factoryAddress, owner, salt) {
+    const iface = new ethers.utils.Interface(["function createAccount(address owner, uint salt) "]);
+    const initCallData = iface.encodeFunctionData("createAccount", [owner, salt]);
+    return factoryAddress + initCallData.slice(2);
+}
+
 function sendMainTokenCall(toAddress, amount) {
     // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
     let ABI = ["function execute(address dest, uint256 value, bytes calldata func)"];
@@ -25,8 +38,7 @@ function sendMainTokenCall(toAddress, amount) {
 }
 
 
-async function buildTx(signer, senderAddress, nonce, callData, tokenPaymasterAddress, entryPointAddress, gasPrice,) {
-    const initCode = '0x';
+async function buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice,) {
 
     // TODO The way in which parameters are determined needs to be discussed
     const callGasLimit = 500000;
@@ -112,7 +124,7 @@ async function buildTx(signer, senderAddress, nonce, callData, tokenPaymasterAdd
  */
 async function sendUserOperation(op, entryPointAddress) {
     // TODO
-    console.log(JSON.stringify({
+    return {
         "jsonrpc": "2.0",
         "id": 1,
         "method": "eth_sendUserOperation",
@@ -120,32 +132,7 @@ async function sendUserOperation(op, entryPointAddress) {
             op,
             entryPointAddress
         ]
-    }));
-}
-
-/**
- * USDC token paymaster
- */
-async function sendTxTransferERC20TokenWithUSDCPay(
-    signer, senderAddress, nonce,
-    tokenPaymasterAddress,
-    entryPointAddress,
-    gasfeePayerAddress,
-    gasPrice,
-    callContractAddress,
-    sendTokenAmount,
-    receiverAddress,
-) {
-    let op = await sendTxCallContract(signer, senderAddress, nonce, entryPointAddress, gasfeePayerAddress, tokenPaymasterAddress, gasPrice, [
-        {
-            ethValue: '0',
-            callContractAbi: erc20Abi,
-            callContractAddress: callContractAddress,
-            callFunc: 'transfer',
-            callParams: [receiverAddress, sendTokenAmount],
-        },
-    ]);
-    return await sendUserOperation(op, entryPointAddress);
+    };
 }
 
 function contractCall(abi, method, params = []) {
@@ -179,6 +166,7 @@ async function sendTxCallContract(
     gasfeePayerAddress,
     tokenPaymasterAddress,
     gasPrice,
+    initCode,
     contractCalls,
 ) {
     console.log("sendTxCallContract");
@@ -207,7 +195,7 @@ async function sendTxCallContract(
     ]);
     console.log("smarterAccountCall callData:", callData);
     // 构建UserOperation
-    return await buildTx(signer, senderAddress, nonce, callData, tokenPaymasterAddress, entryPointAddress, gasPrice);
+    return await buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice);
 }
 
 async function verifyOnBlockscan(address, args = [], contractPath) {
@@ -238,10 +226,52 @@ async function isContractAddress(address) {
     return code !== '0x';
 }
 
+
+/**
+ * USDC token paymaster
+ */
+async function sendTxTransferERC20TokenWithUSDCPay(
+    signer, senderAddress, nonce,
+    tokenPaymasterAddress,
+    entryPointAddress,
+    gasfeePayerAddress,
+    gasPrice,
+    callContractAddress,
+    sendTokenAmount,
+    receiverAddress,
+) {
+    let op = await sendTxCallContract(signer, senderAddress, nonce, entryPointAddress, gasfeePayerAddress, tokenPaymasterAddress, gasPrice, "0x", [
+        {
+            ethValue: '0',
+            callContractAbi: erc20Abi,
+            callContractAddress: callContractAddress,
+            callFunc: 'transfer',
+            callParams: [receiverAddress, sendTokenAmount],
+        },
+    ]);
+    return await sendUserOperation(op, entryPointAddress);
+}
+
+async function sendTxCreateWallet(
+    signer, 
+    senderAddress, nonce,
+    tokenPaymasterAddress,
+    entryPointAddress,
+    gasfeePayerAddress,
+    gasPrice,
+    factoryAddress, salt,
+) {
+    const initCode = getInitCode(factoryAddress, signer.address, salt)
+    let op = await sendTxCallContract(signer, senderAddress, nonce, entryPointAddress, gasfeePayerAddress, tokenPaymasterAddress, gasPrice, initCode, []);
+    return await sendUserOperation(op, entryPointAddress);
+}
+
 module.exports = {
     networkConfigs,
     verifyOnBlockscan,
     sendMainTokenCall,
     sendTxTransferERC20TokenWithUSDCPay,
     isContractAddress,
+    getConfig,
+    sendTxCreateWallet,
 };
