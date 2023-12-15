@@ -12,7 +12,8 @@
     "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-token-usdc-pay.js",
     "deploy-polygon": "npx hardhat --network polygon run script/deploy-erc4337.js",
     "deploy-fuji": "npx hardhat --network fuji run script/deploy-erc4337.js",
-    "deploy-mumbai": "npx hardhat --network mumbai run script/deploy-erc4337.js"
+    "deploy-mumbai": "npx hardhat --network mumbai run script/deploy-erc4337.js",
+    "deploy-moonbeam": "npx hardhat --network moonbeam run script/deploy-erc4337.js"
   },
   "keywords": [],
   "author": "",

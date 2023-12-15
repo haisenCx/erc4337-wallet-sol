@@ -5,7 +5,7 @@
 // Runtime Environment's members available in the global scope.
 const { ethers } = require("hardhat");
 const hre = require("hardhat");
-const verifyOnBlockscan = require("./utils");
+const utils = require("./utils");
 
 const network_configs = {
     mumbai: {
@@ -17,21 +17,20 @@ const network_configs = {
         _eth_usd_aggregator: "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD",
         _usdc_usd_aggregator: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
         _usdc_address: "0x5425890298aed601595a70AB815c96711a31Bc65"
+    },
+    moonbeam: {
+        // don't support USDCTokenPayMaster
+        _eth_usd_aggregator: "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD",
+        _usdc_usd_aggregator: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
+        _usdc_address: "0x5425890298aed601595a70AB815c96711a31Bc65"
     }
 }
 
-let config;
-
 async function main() {
-    if (hre.network.name === "mumbai") {
-        config = network_configs.mumbai
-    } else if (hre.network.name === "fuji") {
-        config = network_configs.fuji
-    } else {
-        config = network_configs.ethereum
-    }
+    const network = hre.network.name;
+    console.log("Network:", network, "configs:", network_configs[network]);
 
-    console.log("Network:", hre.network.name)
+    let config = network_configs[network];
 
     let [addr] = await ethers.getSigners();
 
@@ -64,7 +63,7 @@ async function delopyContract(name, contractName, constructorParams = [], verify
     const factory = await ethers.getContractFactory(contractName);
     const contract = await factory.deploy(...constructorParams);
     await contract.deployed();
-    await verifyOnBlockscan(contract.address, constructorParams, verifyParams);
+    await utils.verifyOnBlockscan(contract.address, constructorParams, verifyParams);
     console.log("[%s] Contract address: %s", name, contract.address);
     return contract.address;
 }
