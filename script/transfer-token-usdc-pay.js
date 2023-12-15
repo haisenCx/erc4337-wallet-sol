@@ -29,14 +29,41 @@ async function main() {
 
     const gasPrice = await hre.ethers.provider.getGasPrice();
 
-    console.log(JSON.stringify(utils.sendTxTransferERC20TokenWithUSDCPay(
-        addr, senderAddress, nonce,
-        config.contractAddress.usdcPaymaster,
-        config.contractAddress.entryPoint,
-        config.contractAddress.usdc,
-        gasPrice,
-        config.contractAddress.usdc, 100, "0x5134F00C95b8e794db38E1eE39397d8086cee7Ed",
-    )));
+    const op = await utils.sendTxTransferERC20TokenWithUSDCPay(
+        {
+            // signer by private key in .nev file
+            signer: addr,
+        },
+        {
+            // contract wallet address
+            senderAddress: senderAddress,
+            // contract wallet nonce
+            nonce: nonce,
+            // tx gasfee config
+            gasfee: {
+                // The token address of the paymaster
+                tokenPayMasterAddress: config.contractAddress.usdcPaymaster,
+                // The token address from which the gasfee is paid
+                payGasfeeTokenAddress: config.contractAddress.usdc,
+                // gas price
+                gasPrice: gasPrice,
+            },
+            // entrypoint contract info
+            entrypoint: {
+                // entrypoint contract address
+                address: config.contractAddress.entryPoint,
+            },
+        },
+        {
+            // ERC20 tx contract address
+            contractAddress: config.contractAddress.usdc,
+            // ERC20 tx transfer token to address
+            receiverAddress: "0x5134F00C95b8e794db38E1eE39397d8086cee7Ed",
+            // ERC20 tx transfer token amount
+            amount: 100,
+        },
+    );
+    console.log("UserOperation:", JSON.stringify(op));
 }
 
 main().catch((error) => {

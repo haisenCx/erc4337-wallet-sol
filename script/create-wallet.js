@@ -23,13 +23,39 @@ async function main() {
 
     const gasPrice = await hre.ethers.provider.getGasPrice();
 
+    const nonce = "0";
+
     console.log(JSON.stringify(await utils.sendTxCreateWallet(
-        addr, senderAddress, "0",
-        config.contractAddress.usdcPaymaster,
-        config.contractAddress.entryPoint,
-        config.contractAddress.usdc,
-        gasPrice,
-        config.contractAddress.smarterV1Factory, salt,
+        {
+            // signer by private key in .nev file
+            signer: addr,
+        },
+        {
+            // contract wallet address
+            senderAddress: senderAddress,
+            // contract wallet nonce
+            nonce: nonce,
+            // tx gasfee config
+            gasfee: {
+                // The token address of the paymaster
+                tokenPayMasterAddress: config.contractAddress.usdcPaymaster,
+                // The token address from which the gasfee is paid
+                payGasfeeTokenAddress: config.contractAddress.usdc,
+                // gas price
+                gasPrice: gasPrice,
+            },
+            // entrypoint contract info
+            entrypoint: {
+                // entrypoint contract address
+                address: config.contractAddress.entryPoint,
+            },
+        },
+        {
+            // create wallet factory address
+            accountFactoryAddress: config.contractAddress.smarterV1Factory,
+            // create wallet salt
+            salt: salt,
+        },
     )));
 }
 

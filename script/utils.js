@@ -2,25 +2,16 @@ const erc20Abi = require('./data/IERC20.json');
 const { arrayify } = require("@ethersproject/bytes");
 const { BigNumber } = require("@ethersproject/bignumber");
 const { ethers } = require('hardhat');
-
-const networkConfigs = {
-    mumbai: {
-        contractAddress: {
-            entryPoint: "0xD79b0817A1Aeb55042d7b10bD25f99F17239333a",
-            smarterV1Factory: "0x57811fb5ea260740244fc81f421a5Ca156c78060",
-            usdcPaymaster: "0x0F1499cBB313492a164e93f2c5a35a35246d030E",
-            swtPaymaster: "0x4B63443E5eeecE233AADEC1359254c5C601fB7f4",
-            usdc: "0x9999f7Fea5938fD3b1E26A12c3f2fb024e194f97",
-            uswt: "0xF981Ac497A0fe7ad2Dd670185c6e7D511Bf36d6d",
-        }
-    }
-};
+const networkConfigs = require('./config');
 
 function getConfig() {
-    console.log("networkConfigs:", networkConfigs)
-    config = networkConfigs[hre.network.name]
-    console.log("Network:", hre.network.name);
-    console.log("Config:", config);
+    const networkName = hre.network.name
+    console.log("Network:", networkName, "configs:", networkConfigs);
+
+    const config = networkConfigs[networkName];
+    if (!config) {
+        throw new Error(`No configuration found for network: ${networkName}`);
+    }
     return config;
 }
 
@@ -37,9 +28,7 @@ function sendMainTokenCall(toAddress, amount) {
     return iface.encodeFunctionData("execute", [toAddress, amount, "0x"]);
 }
 
-
 async function buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice,) {
-
     // TODO The way in which parameters are determined needs to be discussed
     const callGasLimit = 500000;
     const verificationGasLimit = 500000;
@@ -65,7 +54,6 @@ async function buildTx(signer, senderAddress, nonce, initCode, callData, tokenPa
         ],
     );
     const paymasterSignPackHash = ethers.utils.keccak256(paymasterSignPack);
-    console.log("paymasterSignPackHash:", paymasterSignPackHash);
     // The tested TokenPaymaster did not contain verification logic, so the signature was not verified
     const paymasterDataSign = await signer.signMessage(arrayify(paymasterSignPackHash));
     paymasterAndData = ethers.utils.defaultAbiCoder.encode(
@@ -141,7 +129,6 @@ function contractCall(abi, method, params = []) {
 }
 
 async function smarterAccountCall(method, params = []) {
-    console.log("smarterAccountCall, method:", method, "params:", params);
     const smarterAccountV1Factory = await ethers.getContractFactory("SmarterAccountV1");
     const smarterAccountV1 = await smarterAccountV1Factory.attach(ethers.constants.AddressZero);
     return smarterAccountV1.interface.encodeFunctionData(method, params);
@@ -150,42 +137,30 @@ async function smarterAccountCall(method, params = []) {
 
 /**
  * 发送交易，调用合约
- * @param entryPointAddress
- * @param tokenPaymasterAddress
- * @param gasPrice
- * @param ethValue 交易发送ETH数量，单纯调合约时为0
- * @param callContractAbi 调用的合约ABI文件
- * @param callContractAddress 调用的合约地址
- * @param callFunc 调用的方法
- * @param callParams 调用参数
- * @returns
  */
-async function sendTxCallContract(
-    signer, senderAddress, nonce,
-    entryPointAddress,
-    gasfeePayerAddress,
-    tokenPaymasterAddress,
-    gasPrice,
-    initCode,
-    contractCalls,
-) {
-    console.log("sendTxCallContract");
-    // ERC20 token 代付合约，需要先授权
+async function sendTxCallContract(hardhatObject, erc4337Object, contractCalls) {
+    const { signer } = hardhatObject;
+    const senderAddress = erc4337Object.senderAddress;
+    const nonce = erc4337Object.nonce;
+    const tokenPaymasterAddress = erc4337Object.gasfee.tokenPayMasterAddress;
+    const gasfeePayerAddress = erc4337Object.gasfee.payGasfeeTokenAddress;
+    const gasPrice = erc4337Object.gasfee.gasPrice;
+    const entryPointAddress = erc4337Object.entrypoint.address;
+    const initCode = erc4337Object.initCode;
+    // ERC20 token payment contract, which needs to be authorized first
     const approveZeroCallData = contractCall(erc20Abi, "approve", [tokenPaymasterAddress, 0]);
     const approveMaxCallData = contractCall(erc20Abi, "approve", [tokenPaymasterAddress, ethers.constants.MaxUint256]);
-    // 组装调用的合约数据
+    // Assemble the contract data of the call
     const execcteBatchAddress = [gasfeePayerAddress, gasfeePayerAddress];
     const execcteBatchValue = [BigNumber.from(0), BigNumber.from(0)];
     const execcteBatchCallData = [approveZeroCallData, approveMaxCallData];
 
     for (const contractCallParams of contractCalls) {
-        console.log("contractCallParams:", contractCallParams);
         const { ethValue, callContractAbi, callContractAddress, callFunc, callParams } = contractCallParams;
-        // 组装钱包合约调用数据
+        // Assemble the contract data of the call
         execcteBatchAddress.push(callContractAddress);
         execcteBatchValue.push(ethValue);
         const callTxData = contractCall(callContractAbi, callFunc, callParams);
-        console.log("callTxData:", callTxData);
         execcteBatchCallData.push(callTxData);
     }
     const callData = await smarterAccountCall('executeBatch(address[],uint256[],bytes[])', [
@@ -193,9 +168,44 @@ async function sendTxCallContract(
         execcteBatchValue,
         execcteBatchCallData,
     ]);
-    console.log("smarterAccountCall callData:", callData);
-    // 构建UserOperation
+    // build UserOperation
     return await buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice);
+}
+
+
+async function isContractAddress(address) {
+    const code = await ethers.provider.getCode(address);
+    return code !== '0x';
+}
+
+
+/**
+ * USDC token paymaster
+ */
+async function sendTxTransferERC20TokenWithUSDCPay(hardhatObject, erc4337Object, txObject) {
+    erc4337Object.initCode = "0x";
+    let op = await sendTxCallContract(
+        hardhatObject,
+        erc4337Object,
+        [{
+            ethValue: '0',
+            callContractAddress: txObject.contractAddress,
+            callContractAbi: erc20Abi,
+            callFunc: 'transfer',
+            callParams: [txObject.receiverAddress, txObject.amount],
+        }]
+    );
+    return await sendUserOperation(op, erc4337Object.entrypoint.address);
+}
+
+/**
+ * Create wallet
+ */
+async function sendTxCreateWallet(hardhatObject, erc4337Object, txObject) {
+    const { accountFactoryAddress, salt } = txObject;
+    erc4337Object.initCode = getInitCode(accountFactoryAddress, hardhatObject.signer.address, salt);
+    let op = await sendTxCallContract(hardhatObject, erc4337Object, []);
+    return await sendUserOperation(op, erc4337Object.entrypoint.address);
 }
 
 async function verifyOnBlockscan(address, args = [], contractPath) {
@@ -220,54 +230,7 @@ async function verifyOnBlockscan(address, args = [], contractPath) {
     }
 }
 
-
-async function isContractAddress(address) {
-    const code = await ethers.provider.getCode(address);
-    return code !== '0x';
-}
-
-
-/**
- * USDC token paymaster
- */
-async function sendTxTransferERC20TokenWithUSDCPay(
-    signer, senderAddress, nonce,
-    tokenPaymasterAddress,
-    entryPointAddress,
-    gasfeePayerAddress,
-    gasPrice,
-    callContractAddress,
-    sendTokenAmount,
-    receiverAddress,
-) {
-    let op = await sendTxCallContract(signer, senderAddress, nonce, entryPointAddress, gasfeePayerAddress, tokenPaymasterAddress, gasPrice, "0x", [
-        {
-            ethValue: '0',
-            callContractAbi: erc20Abi,
-            callContractAddress: callContractAddress,
-            callFunc: 'transfer',
-            callParams: [receiverAddress, sendTokenAmount],
-        },
-    ]);
-    return await sendUserOperation(op, entryPointAddress);
-}
-
-async function sendTxCreateWallet(
-    signer, 
-    senderAddress, nonce,
-    tokenPaymasterAddress,
-    entryPointAddress,
-    gasfeePayerAddress,
-    gasPrice,
-    factoryAddress, salt,
-) {
-    const initCode = getInitCode(factoryAddress, signer.address, salt)
-    let op = await sendTxCallContract(signer, senderAddress, nonce, entryPointAddress, gasfeePayerAddress, tokenPaymasterAddress, gasPrice, initCode, []);
-    return await sendUserOperation(op, entryPointAddress);
-}
-
 module.exports = {
-    networkConfigs,
     verifyOnBlockscan,
     sendMainTokenCall,
     sendTxTransferERC20TokenWithUSDCPay,
