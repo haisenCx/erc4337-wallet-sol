@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 /* solhint-disable reason-string */
 
-import "contracts/erc4337/samples/TokenPaymaster.sol";
+import "contracts/samples/TokenPaymaster.sol";
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -85,13 +85,13 @@ contract USDCTokenPaymaster is BasePaymaster {
         uint256 tokenPrefund = getTokenValueOfEth(requiredPreFund);
         // verificationGasLimit is dual-purposed, as gas limit for postOp. make sure it is high enough
         // make sure that verificationGasLimit is high enough to handle postOp
-        require(userOp.verificationGasLimit > COST_OF_POST, "USDTTokenPaymaster: gas too low for postOp");
+        require(userOp.verificationGasLimit > COST_OF_POST, "TokenPaymaster: gas too low for postOp");
         if (userOp.initCode.length != 0) {
             _validateConstructor(userOp);
             //the decimals of usdc is 6,so we need to transfer tokenPrefund decimals to 18 ,then compare usdc balance of sender
-            require(_usdc.balanceOf(userOp.sender) >= tokenPrefund, "USDTTokenPaymaster: no balance (pre-create)");
+            require(_usdc.balanceOf(userOp.sender) >= tokenPrefund, "TokenPaymaster: no balance (pre-create)");
         } else {
-            require(_usdc.balanceOf(userOp.sender) >= tokenPrefund, "USDTTokenPaymaster: no balance");
+            require(_usdc.balanceOf(userOp.sender) >= tokenPrefund, "TokenPaymaster: no balance");
         }
 
         return (abi.encode(userOp.sender), 0);

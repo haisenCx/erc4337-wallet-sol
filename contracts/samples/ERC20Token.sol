@@ -3,7 +3,7 @@ pragma solidity ^0.8.12;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
-contract USWT is ERC20 {
+contract ERC20Token is ERC20 {
 
     address private owner;
 
