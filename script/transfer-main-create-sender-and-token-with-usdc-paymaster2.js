@@ -7,9 +7,85 @@ const { ethers } = require("hardhat");
 const hre = require("hardhat");
 const { arrayify } = require("@ethersproject/bytes");
 const { expect } = require("chai");
-const config = require("./utils");
 
 const ETH = (value) => ethers.utils.parseEther(value);
+
+const network_configs = {
+    mumbai: {
+        receiver_address: "0x383b2aA0fCB6dd340CF01a5B3F32739719d0f77F",
+        send_amount: ETH("0.001"),
+        contract_address: {
+            entry_point: "0x081d5B6e93B686cEA78B87f5f96Ec274cC6FFe41",
+            simple_account_factory: "0x07A7c967c36d1a5A660da4E4035c2A61Ca6c0205",
+            simple_account: "0x7A54E27B06D0748AB6778Cd87A2199da01C6725B",
+            // simple_account: "0xef1c4b4a77F604C79AB74A7AB79103C473cDEB1C",
+            token_paymaster: "0x263b6054c4135D47e20fa9D01E9Eb87A0305d022",
+            usdc_paymaster: "0x263b6054c4135D47e20fa9D01E9Eb87A0305d022"
+        }
+    }, fuji: {
+        receiver_address: "0x383b2aA0fCB6dd340CF01a5B3F32739719d0f77F",
+        send_amount: ETH("0.001"),
+        contract_address: {
+            entry_point: "0xF7107A9DAF81d5126858aAd0a561FF03945ff1dD",
+            simple_account_factory: "0xc2923f0042Cc18034F4C780c1Ee306636f812201",
+            // simple_account: "0x8A1cf359BAc29Fb6e8691dBCEe890b7ECbC55449",
+            // simple_account: "0xef1c4b4a77F604C79AB74A7AB79103C473cDEB1C",
+            simple_account: "0x339ECE10d95FbB7182609bE289F26019CC7f7f33",
+            token_paymaster: "0x480DaAC57da548f3349DBDBE80033Ec112A8B3ff",
+            usdc_paymaster: "0x17D664aa4515947F7fEe864e3666f00b5A65Df57"
+        }
+    }, ethereum: {},
+}
+
+let config;
+
+function sendMainTokenCall(toAddress, amount) {
+    // https://github.com/ethers-io/ethers.js/issues/478#issuecomment-495814010
+    let ABI = ["function execute(address dest, uint256 value, bytes calldata func)"];
+    let iface = new ethers.utils.Interface(ABI);
+    return iface.encodeFunctionData("execute", [toAddress, amount, "0x"]);
+}
+
+function sendMainTokenCalls(token_paymaster, receiveAddress, amount) {
+    let execTransactionABI = ["function execTransactionFromEntrypointBatch((bool allowFailed, address to, uint256 value, bytes data, bytes nestedCalls)[])"];
+    let iExecTransactionABIface = new ethers.utils.Interface(execTransactionABI);
+
+    console.log({ token_paymaster })
+    let approveABI = ["function approve(address spender, uint256 amount)"];
+    let iapproveABIface = new ethers.utils.Interface(approveABI);
+    let approve0 = [token_paymaster, 0];
+    let approve1 = [token_paymaster, ethers.BigNumber.from("2").pow(256).sub(1)];
+
+    // 创建参数对象
+    let params = [
+        {
+            allowFailed: false, //  事务不接受失败
+            to: "0xC852bf35CB7B54a33844B181e6fD163387D85868",   // 执行事务的合约地址
+            value: 0, // 事务传递的以太币数量
+            data: iapproveABIface.encodeFunctionData("approve", approve0),         // calldata数据
+            nestedCalls: "0x"   // 内嵌的参数信息，可以再前一级的事务执行完成后，接着继续执行
+        }
+        ,
+        {
+            allowFailed: false, //  事务不接受失败
+            to: "0xC852bf35CB7B54a33844B181e6fD163387D85868",   // 执行事务的合约地址
+            value: 0, // 事务传递的以太币数量
+            data: iapproveABIface.encodeFunctionData("approve", approve1),         // calldata数据
+            nestedCalls: "0x"   // 内嵌的参数信息，可以再前一级的事务执行完成后，接着继续执行
+        },
+        // // 您可以根据需要添加更多对象
+        {
+            allowFailed: false, //  事务不接受失败
+            to: receiveAddress,   // 执行事务的合约地址
+            value: amount, // 事务传递的以太币数量
+            data: "0x",         // calldata数据
+            nestedCalls: "0x"   // 内嵌的参数信息，可以再前一级的事务执行完成后，接着继续执行
+        }
+    ];
+
+    return iExecTransactionABIface.encodeFunctionData("execTransactionFromEntrypointBatch", [params]);
+}
+
 
 function getInitCode(factoryAddress, owner, salt) {
     const iface = new ethers.utils.Interface(["function createAccount(address owner, uint salt) "]);

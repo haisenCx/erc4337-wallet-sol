@@ -1,78 +1,86 @@
 # AA Wallet Solidity
 
-## Dependence
+AA Wallet Solidity is an Ethereum-based smart contract for account abstraction wallets, enabling users to interact with transactions and contracts in ways that differ from traditional Ethereum addresses.
 
-- Node: v16.x+
+## Dependencies
 
-## Setup 
+- Node.js: v16.x or higher
 
-### Install
+## Setup and Configuration
+
+### Installation
+
+Run the following command in the root directory to install the necessary npm packages:
 
 ```shell
-# commom package
 npm install
 ```
 
-### Set env
+### Environment Configuration
 
-1. Copy config
+1. Copy the example environment file:
+
     ```shell
     cp .env.example .env
     ```
-2. modify environment variables
-    ```
+
+2. Modify the environment variables in the `.env` file:
+
+    ```plaintext
+    # Replace with your actual Etherscan API key
     SCAN_API_KEY=ABC123ABC123ABC123ABC123ABC123ABC1
-    # your ethereum address private key
+    # Replace with your Ethereum address private key
     PRIVATE_KEY=0xabc123abc123abc123abc123abc123abc123abc123abc123abc123abc123abc1
     ```
-   
-## Test
 
-1. Test entrypoint
+## Testing
+
+Execute the following commands to run different tests:
+
+1. Entry point test:
+
     ```shell
     npm run entry-test
     ```
-2. Test sign
+
+2. Signing test:
+
     ```shell
     npm run sign-test
     ```
-3. Test event-hash
+
+3. Event hash test:
+
     ```shell
     npm run event-hash
     ```
 
+## Deployment
 
-## Deploy
+Deploy the ERC4337 component to various networks using the commands below:
 
-### Polgon Network
+### Polygon Network
 
-1. Deploy ERC4337 component
-   ```shell
-   npm run deploy-erc4337-polygon
-   ```
+Deploy to Polygon:
+
+```shell
+npm run deploy-erc4337-polygon
+```
 
 ### Mumbai Test Network
 
-1. Deploy ERC4337 component
-   ```shell
-   npm run deploy-erc4337-mumbai
-   ```
+Deploy to Mumbai Testnet:
+
+```shell
+npm run deploy-erc4337-mumbai
+```
 
 ## Contract Address
 
-[Contract Address](https://z4kqs8pky3.feishu.cn/docx/JSgtdpFffoTlKcxldTzcFjNSnOc)
+You can find the deployed contract addresses [here](https://z4kqs8pky3.feishu.cn/docx/JSgtdpFffoTlKcxldTzcFjNSnOc).
 
-## ERC4337
+## ERC4337 Overview
 
-![erc4337.png](image/erc4337.png)
+![ERC4337 Overview](./docs/image/erc4337.png)
 
-
-## Document
-
-1. EIP4337: https://eips.ethereum.org/EIPS/eip-4337
-2. EIP4337 vitalik blog：https://medium.com/infinitism/erc-4337-account-abstraction-without-ethereum-protocol-changes-d75c9d94dc4a
-3. AA code source: https://github.com/eth-infinitism/account-abstraction
-4. AA blog by Alchemy: https://www.alchemy.com/blog/account-abstraction
-5. Multi sign: https://github.com/safe-global/safe-contracts(https://github.com/OpenZeppelin/gnosis-multisig)
-6. Mumbai chainLink：https://faucets.chain.link/mumbai
-7. Mumbai faucet: https://faucet.polygon.technology
+For the source code, please visit the [GitHub repository](https://github.com/eth-infinitism/account-abstraction).

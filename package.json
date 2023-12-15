@@ -18,6 +18,7 @@
     "create-wallet": "npx hardhat --network mumbai run script/create-wallet.js",
     "transfer-no-pay": "npx hardhat --network mumbai run script/transfer-main-token-without-paymaster.js",
     "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-main-token-with-paymaster.js",
+    "transfer-with-pay2": "npx hardhat --network mumbai run script/transfer-token-usdc-pay.js",
     "verify": "npx hardhat --network mumbai run script/verify-blockscan.js"
   },
   "keywords": [],
