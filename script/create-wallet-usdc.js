@@ -8,7 +8,7 @@ async function main() {
     let [addr, ...addrs] = await ethers.getSigners();
     console.log("address: " + addr.address);
 
-    const salt = 1;
+    const salt = 0;
 
     const smarterAccountV1FactoryF = await ethers.getContractFactory("SmarterAccountV1Factory");
     const smarterAccountV1FactoryContract = await smarterAccountV1FactoryF.attach(config.contractAddress.smarterV1Factory);
@@ -43,6 +43,8 @@ async function main() {
                 payGasfeeTokenAddress: config.contractAddress.usdc,
                 // gas price
                 gasPrice: gasPrice,
+                // gaslimit
+                gasLimit: config.txConfig.gasLimit,
             },
             // entrypoint contract info
             entrypoint: {

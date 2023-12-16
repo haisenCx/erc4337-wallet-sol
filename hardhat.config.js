@@ -99,6 +99,9 @@ module.exports = {
         }, fuji: {
             url: 'https://api.avax-test.network/ext/C/rpc',
             accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
+        }, moonbase: {
+            url: 'https://moonbase-alpha.public.blastapi.io',
+            accounts: process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : []
         }
     },
     gasReporter: {

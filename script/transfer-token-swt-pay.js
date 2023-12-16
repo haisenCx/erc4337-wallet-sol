@@ -42,9 +42,9 @@ async function main() {
             // tx gasfee config
             gasfee: {
                 // The token address of the paymaster
-                tokenPayMasterAddress: config.contractAddress.usdcPaymaster,
+                tokenPayMasterAddress: config.contractAddress.swtPaymaster,
                 // The token address from which the gasfee is paid
-                payGasfeeTokenAddress: config.contractAddress.usdc,
+                payGasfeeTokenAddress: config.contractAddress.swt,
                 // gas price
                 gasPrice: gasPrice,
                 // gaslimit
@@ -58,7 +58,7 @@ async function main() {
         },
         {
             // ERC20 tx contract address
-            contractAddress: config.contractAddress.usdc,
+            contractAddress: config.contractAddress.swt,
             // ERC20 tx transfer token to address
             receiverAddress: "0x5134F00C95b8e794db38E1eE39397d8086cee7Ed",
             // ERC20 tx transfer token amount
