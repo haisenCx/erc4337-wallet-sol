@@ -18,7 +18,7 @@ const network_configs = {
         _usdc_usd_aggregator: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",
         _usdc_address: "0x5425890298aed601595a70AB815c96711a31Bc65"
     },
-    moonbeam: {
+    moonbase: {
         // don't support USDCTokenPayMaster
         _eth_usd_aggregator: "0x5498BB86BC934c8D34FDA08E81D444153d0D06aD",
         _usdc_usd_aggregator: "0x7898AcCC83587C3C55116c5230C17a6Cd9C71bad",

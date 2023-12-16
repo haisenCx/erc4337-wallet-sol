@@ -6,7 +6,7 @@ const networkConfigs = require('./config');
 
 function getConfig() {
     const networkName = hre.network.name
-    console.log("Network:", networkName, "configs:", networkConfigs);
+    console.log("Network:", networkName, "configs:", networkConfigs[networkName]);
 
     const config = networkConfigs[networkName];
     if (!config) {
@@ -28,11 +28,16 @@ function sendMainTokenCall(toAddress, amount) {
     return iface.encodeFunctionData("execute", [toAddress, amount, "0x"]);
 }
 
-async function buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice,) {
+async function buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice, gasLimit) {
+    // gasPrice * 125% = gasPrice
+    let resultMul = gasPrice.mul(125);
+    let resultDiv = resultMul.div(100);
+    gasPrice = resultDiv;
+
     // TODO The way in which parameters are determined needs to be discussed
-    const callGasLimit = 500000;
-    const verificationGasLimit = 500000;
-    const preVerificationGas = 500000;
+    const callGasLimit = gasLimit;
+    const verificationGasLimit = gasLimit;
+    const preVerificationGas = gasLimit;
     const maxFeePerGas = gasPrice;
     const maxPriorityFeePerGas = gasPrice;
     let paymasterAndData;
@@ -145,6 +150,7 @@ async function sendTxCallContract(hardhatObject, erc4337Object, contractCalls) {
     const tokenPaymasterAddress = erc4337Object.gasfee.tokenPayMasterAddress;
     const gasfeePayerAddress = erc4337Object.gasfee.payGasfeeTokenAddress;
     const gasPrice = erc4337Object.gasfee.gasPrice;
+    const gasLimit = erc4337Object.gasfee.gasLimit;
     const entryPointAddress = erc4337Object.entrypoint.address;
     const initCode = erc4337Object.initCode;
     // ERC20 token payment contract, which needs to be authorized first
@@ -157,7 +163,6 @@ async function sendTxCallContract(hardhatObject, erc4337Object, contractCalls) {
 
     for (const contractCallParams of contractCalls) {
         const { ethValue, callContractAbi, callContractAddress, callFunc, callParams } = contractCallParams;
-        // Assemble the contract data of the call
         execcteBatchAddress.push(callContractAddress);
         execcteBatchValue.push(ethValue);
         const callTxData = contractCall(callContractAbi, callFunc, callParams);
@@ -169,7 +174,7 @@ async function sendTxCallContract(hardhatObject, erc4337Object, contractCalls) {
         execcteBatchCallData,
     ]);
     // build UserOperation
-    return await buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice);
+    return await buildTx(signer, senderAddress, nonce, initCode, callData, tokenPaymasterAddress, entryPointAddress, gasPrice, gasLimit);
 }
 
 

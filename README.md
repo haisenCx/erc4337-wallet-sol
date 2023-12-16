@@ -43,18 +43,6 @@ Execute the following commands to run different tests:
     npm run entry-test
     ```
 
-2. Signing test:
-
-    ```shell
-    npm run sign-test
-    ```
-
-3. Event hash test:
-
-    ```shell
-    npm run event-hash
-    ```
-
 ## Deployment
 
 Deploy the ERC4337 component to various networks using the commands below:
@@ -64,7 +52,7 @@ Deploy the ERC4337 component to various networks using the commands below:
 Deploy to Polygon:
 
 ```shell
-npm run deploy-erc4337-polygon
+npm run deploy-polygon
 ```
 
 ### Mumbai Test Network
@@ -72,7 +60,7 @@ npm run deploy-erc4337-polygon
 Deploy to Mumbai Testnet:
 
 ```shell
-npm run deploy-erc4337-mumbai
+npm run deploy-mumbai
 ```
 
 ## Contract Address

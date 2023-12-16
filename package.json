@@ -8,12 +8,14 @@
     "codecov": "npx hardhat coverage --network localhost",
     "abi": "npx hardhat export-abi",
     "entry-test": "npx hardhat test --network hardhat test/entry-point.test.js",
-    "create-wallet-test": "npx hardhat --network mumbai run script/create-wallet.js",
-    "transfer-with-pay": "npx hardhat --network mumbai run script/transfer-token-usdc-pay.js",
+    "create-wallet-usdc": "npx hardhat --network mumbai run script/create-wallet-usdc.js",
+    "create-wallet-swt": "npx hardhat --network moonbase run script/create-wallet-swt.js",
+    "transfer-with-usdcpay": "npx hardhat --network mumbai run script/transfer-token-usdc-pay.js",
+    "transfer-with-swtpay": "npx hardhat --network moonbase run script/transfer-token-swt-pay.js",
     "deploy-polygon": "npx hardhat --network polygon run script/deploy-erc4337.js",
     "deploy-fuji": "npx hardhat --network fuji run script/deploy-erc4337.js",
     "deploy-mumbai": "npx hardhat --network mumbai run script/deploy-erc4337.js",
-    "deploy-moonbeam": "npx hardhat --network moonbeam run script/deploy-erc4337.js"
+    "deploy-moonbase": "npx hardhat --network moonbase run script/deploy-erc4337.js"
   },
   "keywords": [],
   "author": "",
