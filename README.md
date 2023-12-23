@@ -6,14 +6,6 @@ AA Wallet Solidity is an Ethereum-based smart contract for account abstraction w
 
 - Node.js: v16.x or higher
 
-## Core Code
-
-- [EntryPoint.sol](./contracts/core/EntryPoint.sol)
-- [SWTokenPaymaster.sol](./contracts/samples/SWTokenPaymaster.sol)
-- [USDCTokenPaymaster.sol](./contracts/samples/USDCTokenPaymaster.sol)
-- [SmarterAccountV1.sol](./contracts/samples/SmarterAccountV1.sol)
-- [SmarterAccountV1Factory.sol](./contracts/samples/SmarterAccountV1Factory.sol)
-
 ## Setup and Configuration
 
 ### Installation
